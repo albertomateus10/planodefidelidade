@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Acompanhe suas revisões e ganhe descontos progressivos com o Plano de Fidelidade San Marino Nota 10. Cada revisão te leva mais longe!">
+    <meta name="keywords" content="San Marino, Plano de Fidelidade, Revisão de Veículos, Desconto, Concessionária, Nota 10">
+    <title>Plano de Fidelidade San Marino Nota 10</title>
+    
+    <!-- Font Awesome para ícones premium -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Folha de estilos personalizada -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- Cabeçalho Principal -->
+    <header>
+        <div class="header-container">
+            <div class="logo-main">
+                <div class="logo-title-wrapper">
+                    <div class="logo-nota10">San Marino <span>Nota 10</span></div>
+                </div>
+                <div class="logo-subtitle">Plano de Fidelidade</div>
+            </div>
+            
+            <!-- Botão Administrativo -->
+            <button class="admin-badge" id="admin-btn" title="Clique para entrar no modo administrador. Clique com botão direito para configurar chaves do Firebase.">
+                <i class="fas fa-lock"></i>
+                <span id="admin-text">Modo Administrador</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Conteúdo Principal -->
+    <main>
+        <!-- Painel Lateral: Busca, Informações e Cadastro -->
+        <section class="panel-side">
+            
+            <!-- Busca do Veículo -->
+            <div class="card-premium">
+                <h3 class="card-title">
+                    <i class="fas fa-search"></i>
+                    Buscar Veículo
+                </h3>
+                <form id="search-form">
+                    <div class="form-group">
+                        <label for="search-input">Placa ou Chassi</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" id="search-input" class="form-input" placeholder="Ex: ABC1D23 ou Chassi..." required autocomplete="off">
+                            <i class="fas fa-car"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-premium">
+                        <i class="fas fa-search"></i>
+                        Buscar
+                    </button>
+                </form>
+
+                <!-- Detalhes do Veículo Encontrado (oculto por padrão) -->
+                <div id="vehicle-details" class="vehicle-info-display" style="display: none;">
+                    <h4 class="card-title" style="font-size: 1.1rem; margin-bottom: 12px; margin-top: 10px;">
+                        <i class="fas fa-info-circle" style="color: var(--brand-red);"></i> Dados do Veículo
+                    </h4>
+                    <div class="info-row">
+                        <span class="info-label">Placa:</span>
+                        <span class="info-value" id="info-placa">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Chassi:</span>
+                        <span class="info-value" id="info-chassi">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Concessionária:</span>
+                        <span class="info-value" id="info-concessionaria">-</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Cadastrado em:</span>
+                        <span class="info-value" id="info-data">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cadastro de Veículo (Apenas visível/relevante para o Admin, mas disponível para inclusão) -->
+            <div class="card-premium">
+                <h3 class="card-title">
+                    <i class="fas fa-plus-circle"></i>
+                    Cadastrar Veículo
+                </h3>
+                <form id="register-form">
+                    <div class="form-group">
+                        <label for="reg-placa">Placa</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" id="reg-placa" class="form-input" placeholder="Ex: ABC1D23" required>
+                            <i class="fas fa-id-card"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-chassi">Chassi</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" id="reg-chassi" class="form-input" placeholder="Digite o Chassi..." required>
+                            <i class="fas fa-barcode"></i>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-concessionaria">Concessionária Vendedora</label>
+                        <div class="input-icon-wrapper">
+                            <input type="text" id="reg-concessionaria" class="form-input" placeholder="Ex: San Marino Porto Alegre" required>
+                            <i class="fas fa-store"></i>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-premium btn-secondary">
+                        <i class="fas fa-save"></i>
+                        Cadastrar Veículo
+                    </button>
+                </form>
+            </div>
+
+        </section>
+
+        <!-- Trilha do Plano de Fidelidade -->
+        <section class="map-container">
+            <div class="map-header">
+                <div>
+                    <h2>Plano de Fidelidade</h2>
+                    <p style="font-size: 1.3rem; font-weight: 800; color: var(--brand-red); text-transform: uppercase;">San Marino</p>
+                </div>
+                <p>CADA REVISÃO TE LEVA MAIS LONGE!</p>
+            </div>
+
+            <!-- A Estrada Interativa -->
+            <div class="road-circuit">
+                
+                <!-- Nível 1: Estrada (Esquerda para Direita) -->
+                <div class="road-level">
+                    <!-- Bandeira de Início -->
+                    <div class="flag flag-inicio">
+                        <div class="flag-pin"></div>
+                        <div class="flag-banner">Início</div>
+                        <div class="flag-pole"></div>
+                    </div>
+
+                    <!-- 1ª Revisão -->
+                    <div class="road-stop" data-revision="1">
+                        <div class="stop-circle">
+                            <span class="stop-label">1ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">5% de Desconto</div>
+                    </div>
+
+                    <!-- 2ª Revisão -->
+                    <div class="road-stop" data-revision="2">
+                        <div class="stop-circle">
+                            <span class="stop-label">2ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">7% de Desconto</div>
+                    </div>
+
+                    <!-- 3ª Revisão -->
+                    <div class="road-stop" data-revision="3">
+                        <div class="stop-circle">
+                            <span class="stop-label">3ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">10% de Desconto</div>
+                    </div>
+                </div>
+
+                <!-- Curva 1: Conecta Nível 1 ao Nível 2 (Lado Direito) -->
+                <div class="road-curve road-curve-right"></div>
+                <!-- 4ª Revisão posicionada na curva direita -->
+                <div class="road-stop stop-curve stop-curve-4" data-revision="4">
+                    <div class="stop-circle">
+                        <span class="stop-label">4ª</span>
+                        <span class="stop-sublabel">Revisão</span>
+                        <div class="check-overlay"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="stop-discount">12% de Desconto</div>
+                </div>
+
+                <!-- Nível 2: Estrada (Direita para Esquerda) -->
+                <div class="road-level" style="flex-direction: row-reverse;">
+                    <!-- 5ª Revisão (Aparece antes visualmente indo para a esquerda) -->
+                    <div class="road-stop" data-revision="5">
+                        <div class="stop-circle">
+                            <span class="stop-label">5ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">15% de Desconto</div>
+                    </div>
+
+                    <!-- 6ª Revisão -->
+                    <div class="road-stop" data-revision="6">
+                        <div class="stop-circle">
+                            <span class="stop-label">6ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">16% de Desconto</div>
+                    </div>
+                </div>
+
+                <!-- Curva 2: Conecta Nível 2 ao Nível 3 (Lado Esquerdo) -->
+                <div class="road-curve road-curve-left"></div>
+                <!-- 7ª Revisão posicionada na curva esquerda -->
+                <div class="road-stop stop-curve stop-curve-7" data-revision="7">
+                    <div class="stop-circle">
+                        <span class="stop-label">7ª</span>
+                        <span class="stop-sublabel">Revisão</span>
+                        <div class="check-overlay"><i class="fas fa-check"></i></div>
+                    </div>
+                    <div class="stop-discount">17% de Desconto</div>
+                </div>
+
+                <!-- Nível 3: Estrada (Esquerda para Direita) -->
+                <div class="road-level">
+                    <!-- 8ª Revisão -->
+                    <div class="road-stop" data-revision="8">
+                        <div class="stop-circle">
+                            <span class="stop-label">8ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">18% de Desconto</div>
+                    </div>
+
+                    <!-- 9ª Revisão -->
+                    <div class="road-stop" data-revision="9">
+                        <div class="stop-circle">
+                            <span class="stop-label">9ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">19% de Desconto</div>
+                    </div>
+
+                    <!-- 10ª Revisão -->
+                    <div class="road-stop" data-revision="10">
+                        <div class="stop-circle">
+                            <span class="stop-label">10ª</span>
+                            <span class="stop-sublabel">Revisão</span>
+                            <div class="check-overlay"><i class="fas fa-check"></i></div>
+                        </div>
+                        <div class="stop-discount">20% de Desconto</div>
+                    </div>
+
+                    <!-- Bandeira de Chegada -->
+                    <div class="flag flag-chegada">
+                        <div class="flag-pin"></div>
+                        <div class="flag-banner">Chegada!</div>
+                        <div class="flag-pole"></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Rodapé interno do folheto -->
+            <div class="benefits-badge">
+                <i class="fas fa-trophy"></i>
+                <p>A CADA REVISÃO VOCÊ GANHA <span>BENEFÍCIOS EXCLUSIVOS!</span></p>
+            </div>
+            
+            <p class="footnote">*Descontos válidos apenas para serviços realizados na concessionária.</p>
+        </section>
+    </main>
+
+    <!-- MODAL: Configuração do Firebase -->
+    <div class="modal-overlay" id="config-modal">
+        <div class="modal-content" style="max-width: 550px; max-height: 90vh; overflow-y: auto;">
+            <button class="modal-close" id="close-config">&times;</button>
+            <h3 class="modal-title"><i class="fas fa-cog" style="color: var(--brand-green);"></i> Configurar Banco Firebase</h3>
+            <p class="modal-desc">
+                Insira as credenciais do seu projeto Firebase (Web App Config) para ativar o Firestore em tempo real.
+            </p>
+            <form id="config-form">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-api-key" style="font-size: 0.8rem;">API Key</label>
+                        <input type="text" id="cfg-api-key" class="form-input" style="padding-left: 15px;" placeholder="apiKey" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-auth-domain" style="font-size: 0.8rem;">Auth Domain</label>
+                        <input type="text" id="cfg-auth-domain" class="form-input" style="padding-left: 15px;" placeholder="authDomain" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-project-id" style="font-size: 0.8rem;">Project ID</label>
+                        <input type="text" id="cfg-project-id" class="form-input" style="padding-left: 15px;" placeholder="projectId" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-storage-bucket" style="font-size: 0.8rem;">Storage Bucket</label>
+                        <input type="text" id="cfg-storage-bucket" class="form-input" style="padding-left: 15px;" placeholder="storageBucket" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-messaging-sender-id" style="font-size: 0.8rem;">Sender ID</label>
+                        <input type="text" id="cfg-messaging-sender-id" class="form-input" style="padding-left: 15px;" placeholder="messagingSenderId" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 12px;">
+                        <label for="cfg-app-id" style="font-size: 0.8rem;">App ID</label>
+                        <input type="text" id="cfg-app-id" class="form-input" style="padding-left: 15px;" placeholder="appId" required>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 10px; margin-bottom: 25px;">
+                    <label for="cfg-pin" style="font-size: 0.8rem;">PIN do Administrador (Para Alterar Revisões)</label>
+                    <input type="password" id="cfg-pin" class="form-input" style="padding-left: 15px;" placeholder="Padrão: 1234" maxlength="8">
+                </div>
+                <button type="submit" class="btn-premium">
+                    <i class="fas fa-plug"></i> Conectar e Salvar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Digitação do PIN Administrador -->
+    <div class="modal-overlay" id="pin-modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <button class="modal-close" id="close-pin">&times;</button>
+            <h3 class="modal-title" style="text-align: center;"><i class="fas fa-user-shield" style="color: var(--brand-red);"></i> Modo Administrador</h3>
+            <p class="modal-desc" style="text-align: center;">
+                Digite o PIN administrativo para marcar ou desmarcar revisões deste veículo.
+            </p>
+            <form id="pin-form">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <input type="password" id="pin-input" class="form-input" style="padding-left: 15px; text-align: center; font-size: 1.5rem; letter-spacing: 5px;" placeholder="••••" required maxlength="8">
+                </div>
+                <button type="submit" class="btn-premium">
+                    <i class="fas fa-unlock-alt"></i> Liberar Acesso
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast de Notificações -->
+    <div class="toast" id="toast">
+        <i id="toast-icon" class="fas fa-check-circle"></i>
+        <span id="toast-message">Notificação de teste!</span>
+    </div>
+
+    <!-- Rodapé Principal -->
+    <footer>
+        <div class="footer-logo">
+            SAN<span class="bars">///</span>MARINO
+        </div>
+    </footer>
+
+    <!-- SDKs do Firebase (Versão Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Configuração e Arquivos de Código -->
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

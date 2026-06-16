@@ -1,0 +1,11 @@
+{
+  "name": "plano-de-fidelidade",
+  "version": "1.0.0",
+  "description": "Plano de Fidelidade San Marino Nota 10",
+  "scripts": {
+    "start": "npx http-server -p 3000"
+  },
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

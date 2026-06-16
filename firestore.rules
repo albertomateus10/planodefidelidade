@@ -1,0 +1,11 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Permite leitura e escrita pública para a coleção 'veiculos'
+    // Nota: Em produção, configure regras adequadas para restringir a escrita ao administrador.
+    match /veiculos/{veiculoId} {
+      allow read, write: if true;
+    }
+  }
+}
