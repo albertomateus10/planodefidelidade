@@ -1,16 +1,16 @@
 // CONFIGURAÇÕES DO APLICATIVO
-// Você pode preencher os campos abaixo com as credenciais do seu projeto Firebase,
-// ou deixá-los vazios e configurá-los diretamente através da interface administrativa do aplicativo (salvo localmente).
+// Credenciais do Firebase - Projeto: fidelidade-25a91
 
 const CONFIG = {
-    // Configurações do Firebase SDK obtidas no console (Firebase Web App Config)
+    // Configurações do Firebase SDK (Web App Config)
     FIREBASE_CONFIG: {
-        apiKey: "",
-        authDomain: "",
-        projectId: "",
-        storageBucket: "",
-        messagingSenderId: "",
-        appId: ""
+        apiKey: "AIzaSyAHOPxI9vfFfIfDwuO9YxoAdXZCjs0lRKU",
+        authDomain: "fidelidade-25a91.firebaseapp.com",
+        projectId: "fidelidade-25a91",
+        storageBucket: "fidelidade-25a91.firebasestorage.app",
+        messagingSenderId: "71562856198",
+        appId: "1:71562856198:web:e3281d796d1be700cc8087",
+        measurementId: "G-45NE30NMWR"
     },
     
     // PIN de Administrador (para permitir marcar e desmarcar as revisões)
