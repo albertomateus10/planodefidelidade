@@ -3,7 +3,7 @@
 // Estado da Aplicação
 let db = null; // Banco de dados do Firestore
 let currentVehicle = null;
-let isAdmin = false;
+let isAdmin = true;
 
 // Configurações ativas
 let activeConfig = {
@@ -45,14 +45,7 @@ const elements = {
     cfgPin: document.getElementById('cfg-pin'),
     closeConfig: document.getElementById('close-config'),
     
-    pinModal: document.getElementById('pin-modal'),
-    pinForm: document.getElementById('pin-form'),
-    pinInput: document.getElementById('pin-input'),
-    closePin: document.getElementById('close-pin'),
-    
-    // Status do Admin
-    adminBtn: document.getElementById('admin-btn'),
-    adminText: document.getElementById('admin-text'),
+    logoMain: document.querySelector('.logo-main'),
     
     // Pista e Revisões
     stops: document.querySelectorAll('.road-stop'),
@@ -183,37 +176,7 @@ function setupEventListeners() {
         await registerVehicle(placa, chassi);
     });
 
-    // Botão Administrativo
-    elements.adminBtn.addEventListener('click', () => {
-        if (isAdmin) {
-            // Sair do modo admin
-            isAdmin = false;
-            elements.adminBtn.classList.remove('logged-in');
-            elements.adminText.textContent = "Modo Administrador";
-            showToast("Você saiu do modo administrador.", "success");
-        } else {
-            // Entrar no modo admin (pedir PIN)
-            showModal(elements.pinModal);
-            elements.pinInput.focus();
-        }
-    });
 
-    // Submissão do PIN
-    elements.pinForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const pin = elements.pinInput.value.trim();
-        if (pin === activeConfig.adminPin) {
-            isAdmin = true;
-            elements.adminBtn.classList.add('logged-in');
-            elements.adminText.textContent = "Admin Ativo (Sair)";
-            hideModal(elements.pinModal);
-            elements.pinInput.value = "";
-            showToast("Acesso administrativo liberado!", "success");
-        } else {
-            showToast("PIN incorreto. Tente novamente.", "error");
-            elements.pinInput.select();
-        }
-    });
 
     // Salvar Configurações do Firebase
     elements.configForm.addEventListener('submit', (e) => {
@@ -251,10 +214,9 @@ function setupEventListeners() {
 
     // Fechar modais
     elements.closeConfig.addEventListener('click', () => hideModal(elements.configModal));
-    elements.closePin.addEventListener('click', () => hideModal(elements.pinModal));
 
-    // Abrir modal de configuração ao clicar com botão direito (ou segurando Shift/Ctrl)
-    elements.adminBtn.addEventListener('contextmenu', (e) => {
+    // Abrir modal de configuração ao clicar com botão direito no logotipo principal
+    elements.logoMain.addEventListener('contextmenu', (e) => {
         e.preventDefault();
         elements.cfgApiKey.value = activeConfig.firebaseConfig.apiKey;
         elements.cfgAuthDomain.value = activeConfig.firebaseConfig.authDomain;
@@ -273,13 +235,6 @@ function setupEventListeners() {
             
             if (!currentVehicle) {
                 showToast("Busque ou cadastre um veículo antes para marcar as revisões.", "error");
-                return;
-            }
-
-            if (!isAdmin) {
-                showToast("Acesso negado. Por favor, ative o Modo Administrador para alterar as revisões.", "error");
-                showModal(elements.pinModal);
-                elements.pinInput.focus();
                 return;
             }
 
