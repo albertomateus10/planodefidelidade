@@ -93,7 +93,7 @@ function setupLandingScreen() {
                 document.body.style.overflow = '';
             }, 600);
         } else {
-            showToast("Usuário ou senha incorretos.", "error");
+            showToast("Usuário ou senha errados", "error");
         }
     });
 }
