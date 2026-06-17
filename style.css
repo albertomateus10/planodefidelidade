@@ -934,3 +934,239 @@ footer {
         display: inline-block;
     }
 }
+
+/* ============================================================
+   TELA DE ENTRADA / LANDING SCREEN
+   ============================================================ */
+
+.landing-screen {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.landing-screen.hide {
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(1.03);
+}
+
+/* Imagem de fundo — cobre tudo */
+.landing-bg-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+}
+
+/* Overlay gradiente sutil para dar contraste ao card */
+.landing-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        135deg,
+        rgba(0, 0, 0, 0.08) 0%,
+        rgba(0, 0, 0, 0.25) 60%,
+        rgba(0, 0, 0, 0.5) 100%
+    );
+    z-index: 1;
+}
+
+/* Card de Login — canto superior direito */
+.landing-login-card {
+    position: relative;
+    z-index: 2;
+    margin: 32px 36px 0 0;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.18);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    border-radius: 24px;
+    padding: 30px 28px 24px 28px;
+    box-shadow:
+        0 8px 40px rgba(0, 0, 0, 0.28),
+        inset 0 1px 0 rgba(255,255,255,0.6);
+    animation: cardSlideIn 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) both;
+}
+
+@keyframes cardSlideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0)  scale(1); }
+}
+
+/* Marca no topo do card */
+.landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.landing-brand i {
+    font-size: 1.3rem;
+    color: #ee5253;
+    filter: drop-shadow(0 2px 4px rgba(238,82,83,0.4));
+}
+
+.landing-brand span {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #fff;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+
+/* Títulos */
+.landing-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.35rem;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 4px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.35);
+}
+
+.landing-subtitle {
+    font-size: 0.82rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 22px;
+    font-weight: 500;
+}
+
+/* Formulário */
+.landing-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.landing-input-group {
+    position: relative;
+}
+
+.landing-input-group i {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255,255,255,0.7);
+    font-size: 1rem;
+    pointer-events: none;
+    transition: color 0.2s;
+}
+
+.landing-input {
+    width: 100%;
+    padding: 13px 14px 13px 42px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.landing-input::placeholder {
+    color: rgba(255,255,255,0.55);
+}
+
+.landing-input:focus {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 0 0 3px rgba(255,255,255,0.15);
+}
+
+.landing-input:focus + i {
+    color: #fff;
+}
+
+/* Botão principal */
+.landing-btn {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, #ee5253, #c0392b);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 6px 20px rgba(238, 82, 83, 0.5);
+    transition: all 0.3s ease;
+}
+
+.landing-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(238, 82, 83, 0.6);
+    filter: brightness(1.08);
+}
+
+.landing-btn:active {
+    transform: translateY(0);
+}
+
+/* Link "entrar sem buscar" */
+.landing-skip {
+    display: block;
+    width: 100%;
+    margin-top: 12px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: center;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+    padding: 4px 0;
+}
+
+.landing-skip:hover {
+    color: #fff;
+}
+
+/* App principal oculto na entrada */
+.main-app-hidden {
+    display: none;
+}
+
+/* Responsivo: card centralizado em mobile */
+@media (max-width: 600px) {
+    .landing-login-card {
+        margin: 20px auto 0 auto;
+        width: calc(100% - 40px);
+        left: 0;
+        right: 0;
+    }
+
+    .landing-screen {
+        justify-content: center;
+    }
+}
+

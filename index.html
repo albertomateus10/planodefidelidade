@@ -15,6 +15,48 @@
 </head>
 <body>
 
+    <!-- ===== TELA DE ENTRADA / LOGIN ===== -->
+    <div id="landing-screen" class="landing-screen">
+        <!-- Imagem de fundo completa -->
+        <img src="nota10.png" alt="Plano de Fidelidade San Marino Nota 10" class="landing-bg-img">
+        <!-- Overlay suave para contrastar o card -->
+        <div class="landing-overlay"></div>
+
+        <!-- Card de Login — canto superior direito -->
+        <div class="landing-login-card">
+            <div class="landing-brand">
+                <i class="fas fa-car-side"></i>
+                <span>San Marino</span>
+            </div>
+            <h2 class="landing-title">Plano de Fidelidade</h2>
+            <p class="landing-subtitle">Acesse o sistema de revisões</p>
+
+            <form id="landing-form" class="landing-form">
+                <div class="landing-input-group">
+                    <i class="fas fa-search"></i>
+                    <input
+                        type="text"
+                        id="landing-search-input"
+                        class="landing-input"
+                        placeholder="Placa ou Chassi..."
+                        autocomplete="off"
+                    >
+                </div>
+                <button type="submit" class="landing-btn" id="landing-btn">
+                    <i class="fas fa-arrow-right"></i>
+                    Acessar
+                </button>
+            </form>
+
+            <button class="landing-skip" id="landing-skip-btn">
+                Entrar sem buscar
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== APP PRINCIPAL ===== -->
+    <div id="main-app" class="main-app-hidden">
+
     <!-- Cabeçalho Principal -->
     <header>
         <div class="header-container">
@@ -348,6 +390,8 @@
             SAN<span class="bars">///</span>MARINO
         </div>
     </footer>
+
+    </div><!-- /#main-app -->
 
     <!-- SDKs do Firebase (Versão Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>

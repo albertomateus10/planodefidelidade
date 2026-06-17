@@ -70,7 +70,47 @@ document.addEventListener('DOMContentLoaded', () => {
     loadConfiguration();
     setupEventListeners();
     initFirebase();
+    setupLandingScreen();
 });
+
+// 0. Controle da Tela de Entrada (Landing Screen)
+function setupLandingScreen() {
+    const landingScreen  = document.getElementById('landing-screen');
+    const mainApp        = document.getElementById('main-app');
+    const landingForm    = document.getElementById('landing-form');
+    const landingInput   = document.getElementById('landing-search-input');
+    const landingSkipBtn = document.getElementById('landing-skip-btn');
+
+    function entrarNoApp(query) {
+        landingScreen.classList.add('hide');
+        setTimeout(() => {
+            landingScreen.style.display = 'none';
+            mainApp.style.display = 'block';
+            document.body.style.overflow = '';
+
+            // Se veio com uma placa/chassi, preenche e executa a busca automaticamente
+            if (query) {
+                const searchInput = document.getElementById('search-input');
+                if (searchInput) {
+                    searchInput.value = query;
+                    searchVehicle(query.toUpperCase());
+                }
+            }
+        }, 600);
+    }
+
+    // Submissão do formulário de busca da landing
+    landingForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const query = landingInput.value.trim();
+        entrarNoApp(query);
+    });
+
+    // Botão "Entrar sem buscar"
+    landingSkipBtn.addEventListener('click', () => {
+        entrarNoApp('');
+    });
+}
 
 // 1. Carregamento das Configurações (config.js ou localStorage)
 function loadConfiguration() {
