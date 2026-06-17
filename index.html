@@ -33,28 +33,34 @@
         <div class="landing-login-panel">
             <!-- Card de Login -->
             <div class="landing-login-card">
-                <div class="landing-brand">
-                    <i class="fas fa-car-side"></i>
-                    <span>San Marino</span>
-                </div>
-                <h2 class="landing-title">Plano de Fidelidade</h2>
-                <p class="landing-subtitle">Acesse o sistema de revisões</p>
-
                 <form id="landing-form" class="landing-form">
                     <div class="landing-input-group">
-                        <i class="fas fa-search"></i>
-                        <input type="text" id="landing-search-input" class="landing-input"
-                            placeholder="Placa ou Chassi..." autocomplete="off">
+                        <i class="fas fa-user"></i>
+                        <input
+                            type="text"
+                            id="landing-username-input"
+                            class="landing-input"
+                            placeholder="Usuário"
+                            required
+                            autocomplete="username"
+                        >
+                    </div>
+                    <div class="landing-input-group">
+                        <i class="fas fa-lock"></i>
+                        <input
+                            type="password"
+                            id="landing-password-input"
+                            class="landing-input"
+                            placeholder="Senha"
+                            required
+                            autocomplete="current-password"
+                        >
                     </div>
                     <button type="submit" class="landing-btn" id="landing-btn">
-                        <i class="fas fa-arrow-right"></i>
+                        <i class="fas fa-sign-in-alt"></i>
                         Acessar
                     </button>
                 </form>
-
-                <button class="landing-skip" id="landing-skip-btn">
-                    Entrar sem buscar
-                </button>
             </div>
         </div>
     </div>
@@ -120,10 +126,7 @@
                             <span class="info-label">Chassi:</span>
                             <span class="info-value" id="info-chassi">-</span>
                         </div>
-                        <div class="info-row">
-                            <span class="info-label">Concessionária:</span>
-                            <span class="info-value" id="info-concessionaria">-</span>
-                        </div>
+    
                         <div class="info-row">
                             <span class="info-label">Cadastrado em:</span>
                             <span class="info-value" id="info-data">-</span>
@@ -153,14 +156,7 @@
                                 <i class="fas fa-barcode"></i>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="reg-concessionaria">Concessionária Vendedora</label>
-                            <div class="input-icon-wrapper">
-                                <input type="text" id="reg-concessionaria" class="form-input"
-                                    placeholder="Ex: San Marino Porto Alegre" required>
-                                <i class="fas fa-store"></i>
-                            </div>
-                        </div>
+    
                         <button type="submit" class="btn-premium btn-secondary">
                             <i class="fas fa-save"></i>
                             Cadastrar Veículo
