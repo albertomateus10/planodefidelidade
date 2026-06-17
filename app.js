@@ -26,13 +26,11 @@ const elements = {
     registerForm: document.getElementById('register-form'),
     regPlaca: document.getElementById('reg-placa'),
     regChassi: document.getElementById('reg-chassi'),
-    regConcessionaria: document.getElementById('reg-concessionaria'),
     
     // Info do Veículo
     vehicleDetails: document.getElementById('vehicle-details'),
     infoPlaca: document.getElementById('info-placa'),
     infoChassi: document.getElementById('info-chassi'),
-    infoConcessionaria: document.getElementById('info-concessionaria'),
     infoData: document.getElementById('info-data'),
     
     // Modais
@@ -78,37 +76,25 @@ function setupLandingScreen() {
     const landingScreen  = document.getElementById('landing-screen');
     const mainApp        = document.getElementById('main-app');
     const landingForm    = document.getElementById('landing-form');
-    const landingInput   = document.getElementById('landing-search-input');
-    const landingSkipBtn = document.getElementById('landing-skip-btn');
+    const usernameInput  = document.getElementById('landing-username-input');
+    const passwordInput  = document.getElementById('landing-password-input');
 
-    function entrarNoApp(query) {
-        landingScreen.classList.add('hide');
-        setTimeout(() => {
-            landingScreen.style.display = 'none';
-            mainApp.style.display = 'block';
-            document.body.style.overflow = '';
-
-            // Se veio com uma placa/chassi, preenche e executa a busca automaticamente
-            if (query) {
-                const searchInput = document.getElementById('search-input');
-                if (searchInput) {
-                    searchInput.value = query;
-                    searchVehicle(query.toUpperCase());
-                }
-            }
-        }, 600);
-    }
-
-    // Submissão do formulário de busca da landing
     landingForm.addEventListener('submit', (e) => {
         e.preventDefault();
-        const query = landingInput.value.trim();
-        entrarNoApp(query);
-    });
+        const username = usernameInput.value.trim();
+        const password = passwordInput.value;
 
-    // Botão "Entrar sem buscar"
-    landingSkipBtn.addEventListener('click', () => {
-        entrarNoApp('');
+        if (username === 'admin' && password === 'admin') {
+            landingScreen.classList.add('hide');
+            showToast("Login realizado com sucesso!", "success");
+            setTimeout(() => {
+                landingScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                document.body.style.overflow = '';
+            }, 600);
+        } else {
+            showToast("Usuário ou senha incorretos.", "error");
+        }
     });
 }
 
@@ -188,14 +174,13 @@ function setupEventListeners() {
         e.preventDefault();
         const placa = elements.regPlaca.value.trim().toUpperCase();
         const chassi = elements.regChassi.value.trim().toUpperCase();
-        const concessionaria = elements.regConcessionaria.value.trim();
 
-        if (!placa || !chassi || !concessionaria) {
+        if (!placa || !chassi) {
             showToast("Preencha todos os campos do veículo.", "error");
             return;
         }
 
-        await registerVehicle(placa, chassi, concessionaria);
+        await registerVehicle(placa, chassi);
     });
 
     // Botão Administrativo
@@ -353,7 +338,7 @@ async function searchVehicle(query) {
 }
 
 // Cadastra um novo veículo
-async function registerVehicle(placa, chassi, concessionaria) {
+async function registerVehicle(placa, chassi) {
     if (!db) {
         showToast("Banco de dados Firebase não inicializado.", "error");
         return;
@@ -380,7 +365,6 @@ async function registerVehicle(placa, chassi, concessionaria) {
         const novoVeiculo = {
             placa: placa,
             chassi: chassi,
-            concessionaria: concessionaria,
             revisao_1: false,
             revisao_2: false,
             revisao_3: false,
@@ -459,7 +443,6 @@ async function toggleRevision(num, stopElement) {
 function displayVehicleData(vehicle) {
     elements.infoPlaca.textContent = vehicle.placa;
     elements.infoChassi.textContent = vehicle.chassi;
-    elements.infoConcessionaria.textContent = vehicle.concessionaria;
     
     // Converte timestamp do Firebase ou data normal
     let dateStr = "-";
