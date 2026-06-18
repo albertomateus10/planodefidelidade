@@ -550,18 +550,18 @@ main {
 /* Overlays Clicáveis das Revisões */
 .revision-overlay {
     position: absolute;
-    width: 7.5%;
+    width: 10%;
     aspect-ratio: 1;
     border-radius: 50%;
     transform: translate(-50%, -50%);
     cursor: pointer;
     z-index: 10;
-    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease;
+    background: transparent;
+    transition: none;
 }
 
 .revision-overlay:hover {
-    transform: translate(-50%, -50%) scale(1.12);
-    box-shadow: 0 0 0 5px rgba(16, 172, 132, 0.35);
+    background: transparent;
 }
 
 /* Marcador visual: V (check) verde */
