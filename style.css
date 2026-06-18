@@ -1362,16 +1362,18 @@ footer {
 
 /* Imagem de Recomendação no Voucher */
 .voucher-recommendation-card {
-    text-align: center;
+    display: flex;
+    justify-content: center;
     margin-bottom: 20px;
+    width: 100%;
 }
 
 .voucher-rec-img {
     width: 100%;
-    max-width: 500px;
+    max-width: 900px;
     height: auto;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
 /* Tabuleiro no Voucher */
@@ -1384,7 +1386,7 @@ footer {
 
 .voucher-fidelity-board {
     margin: 0 auto;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
 }
 
 /* Desativa cliques no tabuleiro do voucher */
@@ -1466,13 +1468,17 @@ footer {
     
     /* Ajustes específicos para a orientação Paisagem no PDF / Impressão */
     .voucher-rec-img {
-        max-height: 130mm !important;
-        width: auto !important;
+        width: 230mm !important;
+        max-height: 165mm !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        border-radius: 20px !important;
+        display: block !important;
     }
     
     .voucher-fidelity-board {
-        width: 260mm !important;
-        max-height: 180mm !important;
+        width: 230mm !important;
+        max-height: 165mm !important;
         margin: 0 auto !important;
         aspect-ratio: 2481 / 1748 !important;
     }
