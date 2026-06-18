@@ -517,15 +517,6 @@ function setupEventListeners() {
                 return;
             }
 
-            // Solicita o PIN do administrador antes de alterar
-            const pin = prompt("Digite o PIN do administrador para alterar a revisão:");
-            if (pin === null) return; // Cancelou o prompt
-            
-            if (pin !== activeConfig.adminPin) {
-                showToast("PIN incorreto. Alteração não autorizada.", "error");
-                return;
-            }
-
             await toggleRevision(revisionNum, stop);
         });
     });
