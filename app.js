@@ -66,7 +66,6 @@ const elements = {
     voucherChassi: document.getElementById('voucher-chassi'),
     voucherConcessionaria: document.getElementById('voucher-concessionaria'),
     voucherData: document.getElementById('voucher-data'),
-    voucherWhatsappPhone: document.getElementById('voucher-whatsapp-phone'),
     
     // Toast de notificação
     toast: document.getElementById('toast'),
@@ -571,11 +570,6 @@ function setupEventListeners() {
             
             const hoje = new Date();
             elements.voucherData.textContent = hoje.toLocaleDateString('pt-BR');
-
-            // Limpa o campo do WhatsApp do cliente
-            if (elements.voucherWhatsappPhone) {
-                elements.voucherWhatsappPhone.value = "";
-            }
             
             showModal(elements.voucherModal);
         });
@@ -589,14 +583,6 @@ function setupEventListeners() {
 
     if (elements.btnPrintVoucher) {
         elements.btnPrintVoucher.addEventListener('click', () => {
-            const phoneInput = elements.voucherWhatsappPhone;
-            const phone = phoneInput ? phoneInput.value.replace(/\D/g, '') : '';
-            
-            if (!phone || phone.length < 10) {
-                showToast("Por favor, insira um número de WhatsApp válido com DDD.", "error");
-                return;
-            }
-            
             // Mostra toast de progresso
             showToast("Gerando PDF em alta definição...", "success");
             
@@ -611,16 +597,10 @@ function setupEventListeners() {
             
             // Executa a geração do PDF de alta definição e inicia o download
             html2pdf().set(opt).from(element).save().then(() => {
-                showToast("PDF baixado! Abrindo o WhatsApp...", "success");
+                showToast("PDF baixado com sucesso!", "success");
                 
-                // Formata o link do WhatsApp (garante DDI 55 do Brasil se não informado)
-                const fullPhone = phone.startsWith('55') ? phone : '55' + phone;
-                const message = `Olá! Segue o seu voucher do Plano de Fidelidade San Marino Nota 10 para o veículo de placa ${currentVehicle.placa}.\n\nO arquivo PDF foi gerado em alta definição e baixado automaticamente. Por favor, anexe o arquivo nesta conversa para salvá-lo!`;
-                const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(message)}`;
-                
-                // Abre o WhatsApp em uma nova aba
+                // Fecha o modal após o download
                 setTimeout(() => {
-                    window.open(whatsappUrl, '_blank');
                     hideModal(elements.voucherModal);
                 }, 1000);
             }).catch(err => {
