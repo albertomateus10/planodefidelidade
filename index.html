@@ -268,10 +268,12 @@
                         </div>
                     </div>
 
-                    <!-- Card de Recomendação -->
-                    <div class="voucher-recommendation-card">
-                        <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
-                    </div>
+                    <!-- Layout Lado a Lado do Voucher (Recomendação + Tabuleiro) -->
+                    <div class="voucher-body-layout">
+                        <!-- Card de Recomendação -->
+                        <div class="voucher-recommendation-card">
+                            <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
+                        </div>
 
                         <!-- Tabuleiro de Fidelidade -->
                         <div class="voucher-board-wrapper">
@@ -279,6 +281,7 @@
                                 <!-- Checks sincronizados dinamicamente pelo JS -->
                             </div>
                         </div>
+                    </div>
                 </div>
 
             <!-- Campo de WhatsApp para Envio -->
@@ -310,8 +313,8 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
-    <!-- html2pdf.js para exportar PDF -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- html2canvas para exportar imagem PNG -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <!-- Configuração e Arquivos de Código -->
     <script src="config.js"></script>
