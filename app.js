@@ -591,8 +591,8 @@ function setupEventListeners() {
                 margin:       [10, 10, 10, 10],
                 filename:     `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
                 image:        { type: 'jpeg', quality: 1.0 }, // Qualidade máxima
-                html2canvas:  { scale: 3, useCORS: true, logging: false }, // Escala 3 para altíssima nitidez
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' } // Retrato para duas páginas separadas
+                html2canvas:  { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false }, // Escala 3 para altíssima nitidez
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' } // Paisagem para duas páginas separadas
             };
             
             // Executa a geração do PDF de alta definição e inicia o download

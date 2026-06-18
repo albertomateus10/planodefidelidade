@@ -1459,9 +1459,22 @@ footer {
         print-color-adjust: exact !important;
     }
     
+    /* Ajustes específicos para a orientação Paisagem no PDF / Impressão */
+    .voucher-rec-img {
+        max-height: 130mm !important;
+        width: auto !important;
+    }
+    
+    .voucher-fidelity-board {
+        max-height: 170mm !important;
+        width: auto !important;
+        aspect-ratio: 2480 / 1748 !important;
+        margin: 0 auto !important;
+    }
+    
     @page {
         margin: 0.8cm;
-        size: portrait;
+        size: landscape;
     }
 }
 
