@@ -598,32 +598,24 @@ function setupEventListeners() {
             }
             
             // Mostra toast de progresso
-            showToast("Gerando imagem do voucher...", "success");
+            showToast("Gerando PDF em alta definição...", "success");
             
             const element = document.getElementById('voucher-print-area');
+            const opt = {
+                margin:       [10, 10, 10, 10],
+                filename:     `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
+                image:        { type: 'jpeg', quality: 1.0 }, // Qualidade máxima
+                html2canvas:  { scale: 3, useCORS: true, logging: false }, // Escala 3 para altíssima nitidez
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' } // Retrato para duas páginas separadas
+            };
             
-            // Renderiza o voucher em PNG com alta definição (escala 3)
-            html2canvas(element, {
-                scale: 3,                 // Aumenta a escala para melhor definição
-                useCORS: true,            // Permite carregar as imagens do voucher (recomendacao.jpeg e nota10.png)
-                logging: false,
-                backgroundColor: "#ffffff" // Garante o fundo branco da imagem
-            }).then(canvas => {
-                const imgData = canvas.toDataURL("image/png");
-                
-                // Força o download da imagem PNG
-                const link = document.createElement('a');
-                link.href = imgData;
-                link.download = `voucher_${currentVehicle.placa || 'san_marino'}.png`;
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-                
-                showToast("Imagem baixada! Abrindo o WhatsApp...", "success");
+            // Executa a geração do PDF de alta definição e inicia o download
+            html2pdf().set(opt).from(element).save().then(() => {
+                showToast("PDF baixado! Abrindo o WhatsApp...", "success");
                 
                 // Formata o link do WhatsApp (garante DDI 55 do Brasil se não informado)
                 const fullPhone = phone.startsWith('55') ? phone : '55' + phone;
-                const message = `Olá! Segue o seu voucher do Plano de Fidelidade San Marino Nota 10 para o veículo de placa ${currentVehicle.placa}.\n\nA imagem do voucher foi baixada automaticamente. Por favor, anexe a imagem nesta conversa para salvá-lo!`;
+                const message = `Olá! Segue o seu voucher do Plano de Fidelidade San Marino Nota 10 para o veículo de placa ${currentVehicle.placa}.\n\nO arquivo PDF foi gerado em alta definição e baixado automaticamente. Por favor, anexe o arquivo nesta conversa para salvá-lo!`;
                 const whatsappUrl = `https://api.whatsapp.com/send?phone=${fullPhone}&text=${encodeURIComponent(message)}`;
                 
                 // Abre o WhatsApp em uma nova aba
@@ -632,8 +624,8 @@ function setupEventListeners() {
                     hideModal(elements.voucherModal);
                 }, 1000);
             }).catch(err => {
-                console.error("Erro ao gerar imagem:", err);
-                showToast("Erro ao gerar a imagem do voucher.", "error");
+                console.error("Erro ao gerar PDF:", err);
+                showToast("Erro ao gerar o PDF do voucher.", "error");
             });
         });
     }

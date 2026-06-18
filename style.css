@@ -1345,26 +1345,25 @@ footer {
     font-size: 0.9rem;
 }
 
-/* Layout Lado a Lado do Voucher */
-.voucher-body-layout {
-    display: flex;
-    flex-direction: row;
-    gap: 20px;
-    align-items: center;
-    justify-content: space-between;
+/* Quebra de Página do PDF */
+.html2pdf__page-break {
+    display: block;
+    height: 0;
+    margin: 0;
+    border: none;
+    page-break-after: always;
+    break-after: page;
 }
 
 /* Imagem de Recomendação no Voucher */
 .voucher-recommendation-card {
-    flex: 1;
-    max-width: 45%;
     text-align: center;
-    margin-bottom: 0;
+    margin-bottom: 20px;
 }
 
 .voucher-rec-img {
     width: 100%;
-    max-width: 100%;
+    max-width: 500px;
     height: auto;
     border-radius: 12px;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
@@ -1372,9 +1371,8 @@ footer {
 
 /* Tabuleiro no Voucher */
 .voucher-board-wrapper {
-    flex: 1.2;
-    max-width: 52%;
-    margin-top: 0;
+    width: 100%;
+    margin-top: 15px;
     display: flex;
     justify-content: center;
 }
@@ -1406,18 +1404,6 @@ footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
-    }
-    .voucher-body-layout {
-        flex-direction: column;
-        gap: 15px;
-    }
-    .voucher-recommendation-card,
-    .voucher-board-wrapper {
-        max-width: 100%;
-        width: 100%;
-    }
-    .voucher-recommendation-card {
-        margin-bottom: 10px;
     }
 }
 
@@ -1475,7 +1461,7 @@ footer {
     
     @page {
         margin: 0.8cm;
-        size: landscape;
+        size: portrait;
     }
 }
 
