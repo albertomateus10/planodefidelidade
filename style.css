@@ -43,8 +43,10 @@ header {
 }
 
 .header-container {
-    max-width: 1200px;
+    max-width: 100%;
+    width: 100%;
     margin: 0 auto;
+    padding: 0 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -137,13 +139,13 @@ header {
 /* Layout Principal */
 main {
     flex: 1;
-    max-width: 1280px;
+    max-width: 100%;
     width: 100%;
     margin: 0 auto;
-    padding: 0 20px 60px 20px;
+    padding: 0 40px 60px 40px;
     display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 40px;
+    grid-template-columns: 290px 1fr;
+    gap: 30px;
     align-items: start;
 }
 
@@ -157,7 +159,71 @@ main {
 .panel-side {
     display: flex;
     flex-direction: column;
-    gap: 25px;
+    gap: 15px;
+}
+
+/* Fontes menores no painel lateral */
+.panel-side .card-premium {
+    padding: 16px 18px;
+    position: relative;
+}
+
+/* O card de busca (primeiro) precisa de z-index maior para o dropdown sobrepor o card de cadastro */
+.panel-side .card-premium:first-of-type {
+    z-index: 10;
+    overflow: visible;
+}
+
+.panel-side .card-title {
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+    gap: 6px;
+}
+
+.panel-side .card-title i {
+    font-size: 0.9rem;
+}
+
+.panel-side .form-group {
+    margin-bottom: 12px;
+}
+
+.panel-side .form-group label {
+    font-size: 0.72rem;
+    margin-bottom: 4px;
+}
+
+.panel-side .form-input {
+    font-size: 0.82rem;
+    padding: 9px 12px;
+}
+
+.panel-side .input-icon-wrapper i {
+    font-size: 0.9rem;
+    left: 11px;
+}
+
+.panel-side .btn-premium {
+    font-size: 0.8rem;
+    padding: 10px;
+    letter-spacing: 0.5px;
+}
+
+.panel-side .info-label {
+    font-size: 0.78rem;
+}
+
+.panel-side .info-value {
+    font-size: 0.82rem;
+}
+
+.panel-side .vehicle-info-display {
+    margin-top: 10px;
+    padding-top: 12px;
+}
+
+.panel-side .info-row {
+    padding: 6px 0;
 }
 
 .card-premium {
@@ -221,7 +287,7 @@ main {
 
 .form-input {
     width: 100%;
-    padding: 14px 16px 14px 45px;
+    padding: 14px 16px;
     font-family: inherit;
     font-size: 1rem;
     font-weight: 500;
@@ -241,6 +307,142 @@ main {
 
 .form-input:focus + i {
     color: var(--brand-green);
+}
+
+/* ===== Autocomplete Dropdown ===== */
+.autocomplete-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: none;
+    border-radius: 0 0 16px 16px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 50;
+    display: none;
+    animation: dropdownSlideIn 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+}
+
+.autocomplete-dropdown.active {
+    display: block;
+}
+
+@keyframes dropdownSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.autocomplete-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.autocomplete-item:last-child {
+    border-bottom: none;
+    border-radius: 0 0 16px 16px;
+}
+
+.autocomplete-item:hover,
+.autocomplete-item.active {
+    background: linear-gradient(135deg, rgba(16, 172, 132, 0.08), rgba(0, 210, 211, 0.06));
+}
+
+.autocomplete-item-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--brand-green), #00d2d3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.autocomplete-item-icon i {
+    color: #fff;
+    font-size: 0.95rem;
+}
+
+.autocomplete-item-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.autocomplete-item-placa {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-dark);
+    letter-spacing: 0.5px;
+}
+
+.autocomplete-item-chassi {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.autocomplete-highlight {
+    background: rgba(16, 172, 132, 0.2);
+    color: var(--brand-green);
+    font-weight: 700;
+    border-radius: 3px;
+    padding: 0 2px;
+}
+
+.autocomplete-empty {
+    padding: 16px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+.autocomplete-empty i {
+    display: block;
+    font-size: 1.4rem;
+    margin-bottom: 6px;
+    color: rgba(0, 0, 0, 0.15);
+}
+
+/* Scrollbar estilizada para o dropdown */
+.autocomplete-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.12);
+    border-radius: 3px;
+}
+
+.autocomplete-dropdown::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.25);
 }
 
 .btn-premium {
@@ -326,183 +528,51 @@ main {
     gap: 30px;
 }
 
-.map-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 2px solid rgba(0,0,0,0.05);
-    padding-bottom: 20px;
-}
 
-.map-header h2 {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 800;
-    color: var(--text-dark);
-    font-size: 1.8rem;
-}
 
-.map-header p {
-    color: var(--brand-red);
-    font-weight: 700;
-    font-style: italic;
-}
-
-/* O Circuito da Estrada */
-.road-circuit {
+/* Tabuleiro de Fidelidade (nota10.png) */
+.fidelity-board {
     position: relative;
     width: 100%;
     max-width: 900px;
-    margin: 40px auto;
-    display: flex;
-    flex-direction: column;
-    gap: 80px; /* Distância entre os níveis da estrada */
+    margin: 20px auto;
+    aspect-ratio: 2481 / 1748;
+    background-image: url('nota10.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: 20px;
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    container-type: inline-size;
 }
 
-/* Níveis Horizontais da Estrada */
-.road-level {
-    position: relative;
-    height: 80px;
-    background-color: var(--road-color);
-    border-radius: 40px;
-    box-shadow: 
-        inset 0 4px 10px rgba(0,0,0,0.5),
-        0 15px 30px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    justify-content: space-around;
-    padding: 0 60px;
-    z-index: 2;
-}
-
-/* Linha Divisória de Pista (Tracejada) */
-.road-level::after {
-    content: '';
+/* Overlays Clicáveis das Revisões */
+.revision-overlay {
     position: absolute;
-    left: 20px;
-    right: 20px;
-    top: 50%;
-    transform: translateY(-50%);
-    border-top: 4px dashed var(--road-stripe);
-    z-index: 1;
-    pointer-events: none;
-}
-
-/* Curvas de Conexão */
-.road-curve {
-    position: absolute;
-    width: 120px;
-    height: 160px; /* Deve cobrir o gap + metade das duas pistas */
-    background-color: var(--road-color);
-    z-index: 1;
-    box-shadow: 
-        inset 0 4px 10px rgba(0,0,0,0.3),
-        0 10px 20px rgba(0,0,0,0.1);
-}
-
-.road-curve-right {
-    right: 0;
-    top: 40px; /* Ajuste para ligar o nível 1 ao 2 */
-    border-radius: 0 60px 60px 0;
-    border-left: none;
-    box-shadow: 
-        inset -4px 0 10px rgba(0,0,0,0.4),
-        0 10px 20px rgba(0,0,0,0.1);
-}
-
-.road-curve-left {
-    left: 0;
-    top: 200px; /* Ajuste para ligar o nível 2 ao 3 */
-    border-radius: 60px 0 0 60px;
-    border-right: none;
-    box-shadow: 
-        inset 4px 0 10px rgba(0,0,0,0.4),
-        0 10px 20px rgba(0,0,0,0.1);
-}
-
-/* Elemento de Pista: Curva Intermediária da Pista */
-/* Como a 4ª e 7ª revisões estão nas curvas, vamos colocá-las em posições absolutas nas curvas */
-.stop-curve {
-    position: absolute;
-    z-index: 3;
-}
-
-.stop-curve-4 {
-    right: 20px;
-    top: 100px;
-}
-
-.stop-curve-7 {
-    left: 20px;
-    top: 260px;
-}
-
-/* Postos de Revisão (Stops) */
-.road-stop {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 3;
-    cursor: pointer;
-}
-
-/* Círculo Principal da Revisão */
-.stop-circle {
-    width: 64px;
-    height: 64px;
-    background: #ffffff;
-    border: 6px solid var(--brand-red);
+    width: 6.0%;
+    aspect-ratio: 1;
     border-radius: 50%;
+    transform: translate(-50%, -50%);
+    cursor: pointer;
+    z-index: 10;
     display: flex;
-    flex-direction: column;
     justify-content: center;
     align-items: center;
-    box-shadow: 
-        0 8px 15px rgba(0, 0, 0, 0.2),
-        inset 0 2px 5px rgba(0,0,0,0.1);
-    transition: var(--transition-smooth);
-    user-select: none;
+    transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s ease, background-color 0.2s ease;
 }
 
-.stop-label {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 800;
-    font-size: 0.9rem;
-    color: var(--text-dark);
-    line-height: 1;
+.revision-overlay:hover {
+    transform: translate(-50%, -50%) scale(1.18);
+    box-shadow: 0 0 0 6px rgba(16, 172, 132, 0.3);
+    background-color: rgba(255, 255, 255, 0.15);
 }
 
-.stop-sublabel {
-    font-size: 0.55rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    color: var(--text-muted);
-}
-
-/* Caixa de Desconto */
-.stop-discount {
-    margin-top: 10px;
-    background: var(--brand-green);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-weight: 800;
-    font-size: 0.75rem;
-    text-align: center;
-    white-space: nowrap;
-    box-shadow: 
-        0 4px 6px rgba(0, 0, 0, 0.1),
-        0 2px 0px #0c8868; /* Efeito 3D sutil na caixinha */
-    transition: var(--transition-smooth);
-}
-
-/* Efeito de Check - O "V" */
-.check-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 64px;
-    height: 64px;
+/* Marcador visual: V (check) verde */
+.check-mark {
+    width: 80%;
+    height: 80%;
+    flex-shrink: 0;
     background: var(--brand-green);
     border-radius: 50%;
     display: flex;
@@ -510,138 +580,22 @@ main {
     align-items: center;
     transform: scale(0);
     opacity: 0;
+    pointer-events: none;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 5;
-    box-shadow: 0 4px 10px rgba(16, 172, 132, 0.3);
+    box-shadow: 0 6px 15px rgba(16, 172, 132, 0.4);
 }
 
-.check-overlay i {
+.check-mark i {
     color: white;
-    font-size: 2rem;
-    font-weight: bold;
+    font-size: 2.1cqw;
+    font-weight: 900;
+    pointer-events: none;
 }
 
-/* Quando Marcado como Concluído */
-.road-stop.completed .check-overlay {
+/* Quando marcado como concluído */
+.revision-overlay.completed .check-mark {
     transform: scale(1);
     opacity: 1;
-}
-
-.road-stop.completed .stop-discount {
-    background: var(--text-muted);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    opacity: 0.8;
-}
-
-/* Animações e Hovers */
-.road-stop:hover .stop-circle {
-    transform: scale(1.1);
-    box-shadow: 0 12px 20px rgba(0,0,0,0.3);
-}
-
-.road-stop:hover .stop-discount {
-    transform: translateY(2px);
-}
-
-/* Bandeiras de Início e Fim */
-.flag {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 3;
-}
-
-.flag-pole {
-    width: 4px;
-    height: 55px;
-    background: #7f8c8d;
-    position: relative;
-    border-radius: 2px;
-}
-
-.flag-banner {
-    position: absolute;
-    top: 5px;
-    left: 4px;
-    padding: 6px 14px;
-    color: white;
-    font-weight: 800;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    font-family: 'Montserrat', sans-serif;
-    border-radius: 4px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
-    transform-origin: left center;
-    animation: flagWaving 3s ease-in-out infinite alternate;
-}
-
-.flag-inicio .flag-banner {
-    background: var(--brand-red);
-}
-
-.flag-chegada .flag-banner {
-    background: #1e272e;
-    background-image: repeating-linear-gradient(45deg, #1e272e, #1e272e 10px, #fff 10px, #fff 20px);
-    color: #1e272e;
-    text-shadow: 
-        -1px -1px 0 #fff,  
-         1px -1px 0 #fff,
-        -1px  1px 0 #fff,
-         1px  1px 0 #fff;
-}
-
-.flag-pin {
-    width: 10px;
-    height: 10px;
-    background: var(--gold);
-    border-radius: 50%;
-    position: absolute;
-    top: -5px;
-    left: -3px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-@keyframes flagWaving {
-    0% { transform: skewY(0deg) rotate(0deg); }
-    50% { transform: skewY(3deg) rotate(1deg); }
-    100% { transform: skewY(-3deg) rotate(-1deg); }
-}
-
-/* Banner de Benefícios Exclusivos */
-.benefits-badge {
-    background: #fff;
-    border-left: 5px solid var(--gold);
-    border-radius: 12px;
-    padding: 15px 20px;
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    margin-top: 30px;
-    box-shadow: var(--shadow-soft);
-}
-
-.benefits-badge i {
-    font-size: 1.8rem;
-    color: var(--gold);
-}
-
-.benefits-badge p {
-    font-size: 0.9rem;
-    font-weight: 600;
-    line-height: 1.3;
-}
-
-.benefits-badge p span {
-    color: var(--brand-red);
-    font-weight: 800;
-}
-
-.footnote {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    text-align: center;
-    margin-top: 20px;
 }
 
 /* Modais */
@@ -791,149 +745,7 @@ footer {
     margin-right: 5px;
 }
 
-/* Responsividade específica para a pista */
-@media (max-width: 900px) {
-    .road-circuit {
-        gap: 60px;
-        margin: 20px auto;
-        padding-right: 20px;
-        padding-left: 20px;
-    }
-    
-    .road-level {
-        padding: 0 20px;
-        height: 70px;
-    }
-    
-    .road-curve {
-        width: 80px;
-        height: 130px;
-    }
-    
-    .road-curve-right {
-        right: -10px;
-        top: 35px;
-    }
-    
-    .road-curve-left {
-        left: -10px;
-        top: 165px;
-    }
-    
-    .stop-curve-4 {
-        right: 0px;
-        top: 85px;
-    }
-    
-    .stop-curve-7 {
-        left: 0px;
-        top: 215px;
-    }
-
-    .stop-circle {
-        width: 50px;
-        height: 50px;
-        border-width: 4px;
-    }
-    
-    .check-overlay {
-        width: 50px;
-        height: 50px;
-    }
-    
-    .check-overlay i {
-        font-size: 1.5rem;
-    }
-
-    .stop-label {
-        font-size: 0.75rem;
-    }
-    
-    .stop-sublabel {
-        display: none;
-    }
-
-    .stop-discount {
-        padding: 4px 8px;
-        font-size: 0.65rem;
-    }
-
-    .flag-pole {
-        height: 45px;
-    }
-    
-    .flag-banner {
-        font-size: 0.7rem;
-        padding: 4px 8px;
-    }
-}
-
-@media (max-width: 480px) {
-    .road-circuit {
-        gap: 50px;
-    }
-    
-    .road-level {
-        height: 60px;
-        border-radius: 15px;
-    }
-
-    .road-level::after {
-        border-top-width: 2px;
-    }
-
-    .road-curve {
-        display: none; /* Em telas muito pequenas simplificamos o circuito */
-    }
-
-    /* Em mobile extremo, podemos simplesmente desempilhar as revisões em coluna */
-    /* Mas para manter o visual de pista, deixamos as faixas, apenas posicionamos as curvas de forma oculta */
-    
-    .stop-curve-4 {
-        position: relative;
-        right: auto;
-        top: auto;
-    }
-    
-    .stop-curve-7 {
-        position: relative;
-        left: auto;
-        top: auto;
-    }
-
-    .road-circuit {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    .road-level {
-        flex-wrap: wrap;
-        height: auto;
-        padding: 15px 10px;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .road-level::after {
-        display: none;
-    }
-
-    .stop-circle {
-        width: 60px;
-        height: 60px;
-        border-width: 5px;
-    }
-
-    .check-overlay {
-        width: 60px;
-        height: 60px;
-    }
-
-    .stop-sublabel {
-        display: inline-block;
-    }
-}
+/* Responsividade do Tabuleiro de Fidelidade (removida por ser desnecessária devido ao uso de container query e aspect-ratio) */
 
 /* ============================================================
    TELA DE ENTRADA / LANDING SCREEN
@@ -1055,7 +867,7 @@ footer {
 
 .landing-input {
     width: 100%;
-    padding: 13px 14px 13px 42px;
+    padding: 13px 16px;
     background: rgba(255, 255, 255, 0.06);
     border: 1px solid rgba(255, 255, 255, 0.12);
     border-radius: 12px;
@@ -1183,4 +995,467 @@ footer {
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
     }
 }
+
+/* ============================================================
+   ESTILOS DE AUTENTICAÇÃO E MENU DO USUÁRIO
+   ============================================================ */
+
+/* Abas de Autenticação */
+.auth-tabs {
+    display: flex;
+    margin-bottom: 25px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+    gap: 10px;
+}
+
+.auth-tab {
+    flex: 1;
+    background: none;
+    border: none;
+    padding: 12px 0;
+    color: rgba(255, 255, 255, 0.5);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.auth-tab:hover {
+    color: #fff;
+}
+
+.auth-tab.active {
+    color: #ee5253;
+    border-bottom-color: #ee5253;
+}
+
+/* Divisor */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.auth-divider:not(:empty)::before {
+    margin-right: .5em;
+}
+
+.auth-divider:not(:empty)::after {
+    margin-left: .5em;
+}
+
+/* Botão Google */
+.google-btn {
+    width: 100%;
+    padding: 12px;
+    background: #ffffff;
+    color: #1e272e;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.google-btn:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.google-btn img {
+    width: 18px;
+    height: 18px;
+}
+
+/* Menu de Usuário na Barra Lateral */
+.user-menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-card);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(16px) saturate(180%);
+    padding: 8px 12px;
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 15px;
+    width: 100%;
+}
+
+.user-email {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    word-break: break-all;
+}
+
+.btn-logout {
+    background: none;
+    border: none;
+    color: var(--brand-red);
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    border-radius: 6px;
+    transition: var(--transition-smooth);
+}
+
+.btn-logout:hover {
+    background: rgba(238, 82, 83, 0.1);
+    color: var(--brand-red-hover);
+}
+
+/* ============================================================
+   ESTILOS DO PAINEL DE REVISÕES SIMPLIFICADO
+   ============================================================ */
+
+.revisions-panel {
+    background: var(--bg-card);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 24px;
+    padding: 35px;
+    box-shadow: var(--shadow-premium);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.revisions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    padding-bottom: 20px;
+}
+
+
+
+/* Grid de Revisões */
+.revisions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 15px;
+}
+
+@media (max-width: 600px) {
+    .revisions-grid {
+        grid-template-columns: 1fr;
+    }
+    main {
+        padding: 0 20px 40px 20px;
+    }
+    .header-container {
+        padding: 0 20px;
+    }
+}
+
+.revision-card {
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 16px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+}
+
+.revision-card:hover {
+    transform: translateY(-2px);
+    background: #ffffff;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.12);
+}
+
+.revision-badge {
+    width: 44px;
+    height: 44px;
+    background: rgba(238, 82, 83, 0.1);
+    color: var(--brand-red);
+    border-radius: 12px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    transition: var(--transition-smooth);
+}
+
+.revision-details {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    text-align: left;
+}
+
+.revision-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.revision-discount {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text-dark);
+}
+
+.revision-status-icon {
+    font-size: 1.3rem;
+    color: rgba(0, 0, 0, 0.08);
+    transition: var(--transition-smooth);
+}
+
+/* Estado de Completo */
+.revision-card.completed {
+    background: rgba(16, 172, 132, 0.06);
+    border-color: rgba(16, 172, 132, 0.2);
+}
+
+.revision-card.completed:hover {
+    box-shadow: 0 8px 20px rgba(16, 172, 132, 0.08);
+    border-color: rgba(16, 172, 132, 0.3);
+}
+
+.revision-card.completed .revision-badge {
+    background: var(--brand-green);
+    color: white;
+}
+
+.revision-card.completed .revision-status-icon {
+    color: var(--brand-green);
+    transform: scale(1.1);
+}
+
+.revision-card.completed .revision-discount {
+    color: var(--brand-green);
+}
+
+/* ============================================================
+   ESTILOS DO BOTÃO FLUTUANTE E MODAL DE VOUCHER
+   ============================================================ */
+
+/* Botão Flutuante Gerar Voucher */
+.btn-voucher-float {
+    position: fixed;
+    left: 40px;
+    bottom: 30px;
+    z-index: 90;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, var(--brand-red), var(--brand-red-hover));
+    color: white;
+    border: none;
+    border-radius: 50px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(238, 82, 83, 0.35);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: var(--transition-smooth);
+}
+
+.btn-voucher-float:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 12px 25px rgba(238, 82, 83, 0.45);
+}
+
+.btn-voucher-float:active {
+    transform: translateY(-1px);
+}
+
+/* Modal de Voucher Customizado */
+.voucher-modal {
+    z-index: 200;
+}
+
+.voucher-modal-content {
+    max-width: 800px;
+    width: 95%;
+    padding: 24px;
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: var(--shadow-premium);
+    max-height: 95vh;
+    overflow-y: auto;
+}
+
+/* Área de impressão formatada */
+.voucher-print-area {
+    background: #fff;
+    padding: 15px;
+    border-radius: 12px;
+    color: #1e272e;
+}
+
+/* Cabeçalho do veículo no voucher */
+.voucher-vehicle-header {
+    border-bottom: 2px dashed #ceced2;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.voucher-vehicle-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    letter-spacing: 1px;
+}
+
+.voucher-vehicle-grid {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px 20px;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+/* Imagem de Recomendação no Voucher */
+.voucher-recommendation-card {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.voucher-rec-img {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Tabuleiro no Voucher */
+.voucher-board-wrapper {
+    width: 100%;
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+.voucher-fidelity-board {
+    margin: 0 auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Desativa cliques no tabuleiro do voucher */
+.voucher-fidelity-board .revision-overlay {
+    pointer-events: none !important;
+}
+
+.voucher-modal-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.voucher-modal-actions .btn-premium {
+    max-width: 250px;
+}
+
+/* Responsividade do Botão Flutuante e Grid do Voucher */
+@media (max-width: 1024px) {
+    .btn-voucher-float {
+        left: 20px;
+        bottom: 20px;
+        padding: 8px 14px;
+        font-size: 0.75rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .voucher-vehicle-grid {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+}
+
+/* Configuração de Impressão */
+@media print {
+    /* Oculta tudo na tela */
+    body * {
+        visibility: hidden;
+    }
+    
+    /* Torna apenas a área do voucher visível e posicionada no topo */
+    #voucher-print-area, #voucher-print-area * {
+        visibility: visible;
+    }
+    
+    #voucher-print-area {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        box-shadow: none !important;
+        background: white;
+    }
+    
+    /* Garante que o modal overlay, botões e scrollbars sumam no print */
+    .modal-overlay, .modal-close, .voucher-modal-actions, .btn-voucher-float {
+        display: none !important;
+    }
+    
+    /* Corrige renderização das cores de fundo no Chrome/Safari na impressão */
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    @page {
+        margin: 0.8cm;
+        size: portrait;
+    }
+}
+
 
