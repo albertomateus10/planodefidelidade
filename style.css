@@ -567,10 +567,7 @@ main {
 /* Marcador visual: V (check) verde */
 .check-mark {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 8%;
     background: var(--brand-green);
     border-radius: 50%;
     display: flex;
@@ -585,7 +582,7 @@ main {
 
 .check-mark i {
     color: white;
-    font-size: 2.4cqw;
+    font-size: 2.0cqw;
     font-weight: 900;
     pointer-events: none;
     line-height: 1;
