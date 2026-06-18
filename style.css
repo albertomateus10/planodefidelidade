@@ -570,6 +570,9 @@ main {
 
 /* Marcador visual: V (check) verde */
 .check-mark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
     width: 80%;
     height: 80%;
     flex-shrink: 0;
@@ -578,7 +581,7 @@ main {
     display: flex;
     justify-content: center;
     align-items: center;
-    transform: scale(0);
+    transform: translate(-50%, -50%) scale(0);
     opacity: 0;
     pointer-events: none;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -594,7 +597,7 @@ main {
 
 /* Quando marcado como concluído */
 .revision-overlay.completed .check-mark {
-    transform: scale(1);
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
 }
 
