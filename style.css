@@ -1397,6 +1397,24 @@ footer {
     }
 }
 
+@media (max-width: 1024px) {
+    .btn-voucher-float {
+        position: fixed;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: auto;
+        min-width: 150px; /* Reduzido para ficar menor */
+        max-width: 200px; /* Reduzido para ficar menor */
+        border-radius: 6px 6px 0 0; /* Proporcional ao print */
+        padding: 6px 12px; /* Reduzido para ficar menor */
+        font-size: 0.72rem; /* Reduzido para ficar menor */
+        z-index: 1000;
+        margin-top: 0;
+        box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
+    }
+}
+
 /* Configuração de Impressão */
 @media print {
     /* Oculta tudo na tela */
