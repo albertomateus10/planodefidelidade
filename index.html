@@ -7,8 +7,8 @@
     <meta name="description"
         content="Acompanhe suas revisões e ganhe descontos progressivos com o Plano de Fidelidade San Marino Nota 10. Cada revisão te leva mais longe!">
     <meta name="keywords"
-        content="San Marino, Plano de Fidelidade, Revisão de Veículos, Desconto, Concessionária, Nota 10">
-    <title>Plano de Fidelidade San Marino Nota 10</title>
+        content="Plano de Fidelidade - San Marino">
+    <title>Plano de Fidelidade San Marino</title>
 
     <!-- Font Awesome para ícones premium -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -29,24 +29,28 @@
             <div class="landing-overlay"></div>
         </div>
 
-        <!-- Lado Direito (Login) -->
+        <!-- Lado Direito (Login / Cadastro) -->
         <div class="landing-login-panel">
-            <!-- Card de Login -->
+            <!-- Card de Autenticação -->
             <div class="landing-login-card">
+                <!-- Abas de Alternância -->
+                <div class="auth-tabs">
+                    <button id="tab-login" class="auth-tab active">Entrar</button>
+                    <button id="tab-register" class="auth-tab">Cadastrar</button>
+                </div>
+
                 <form id="landing-form" class="landing-form" novalidate>
                     <div class="landing-input-group">
-                        <i class="fas fa-user"></i>
                         <input
-                            type="text"
-                            id="landing-username-input"
+                            type="email"
+                            id="landing-email-input"
                             class="landing-input"
-                            placeholder="Usuário"
+                            placeholder="E-mail"
                             required
-                            autocomplete="username"
+                            autocomplete="email"
                         >
                     </div>
                     <div class="landing-input-group">
-                        <i class="fas fa-lock"></i>
                         <input
                             type="password"
                             id="landing-password-input"
@@ -56,11 +60,31 @@
                             autocomplete="current-password"
                         >
                     </div>
+                    <div class="landing-input-group" id="confirm-password-group" style="display: none;">
+                        <input
+                            type="password"
+                            id="landing-confirm-password-input"
+                            class="landing-input"
+                            placeholder="Confirmar Senha"
+                            autocomplete="new-password"
+                        >
+                    </div>
                     <button type="submit" class="landing-btn" id="landing-btn">
                         <i class="fas fa-sign-in-alt"></i>
-                        Acessar
+                        <span id="btn-text">Acessar</span>
                     </button>
                 </form>
+
+                <!-- Divisor OU -->
+                <div class="auth-divider">
+                    <span>ou</span>
+                </div>
+
+                <!-- Botão do Google -->
+                <button class="google-btn" id="google-login-btn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                    <span>Entrar com Google</span>
+                </button>
             </div>
         </div>
     </div>
@@ -68,24 +92,21 @@
     <!-- ===== APP PRINCIPAL ===== -->
     <div id="main-app" class="main-app-hidden">
 
-        <!-- Cabeçalho Principal -->
-        <header>
-            <div class="header-container">
-                <div class="logo-main">
-                    <div class="logo-title-wrapper">
-                        <div class="logo-nota10">San Marino <span>Nota 10</span></div>
-                    </div>
-                    <div class="logo-subtitle">Plano de Fidelidade</div>
-                </div>
-
-
-            </div>
-        </header>
-
         <!-- Conteúdo Principal -->
-        <main>
+        <main style="padding-top: 40px;">
             <!-- Painel Lateral: Busca, Informações e Cadastro -->
             <section class="panel-side">
+
+                <!-- Menu do Usuário Logado -->
+                <div class="user-menu" id="user-menu">
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <i class="fas fa-user-circle" style="font-size: 1.1rem; color: var(--brand-red);"></i>
+                        <span class="user-email" id="user-email-display">-</span>
+                    </div>
+                    <button class="btn-logout" id="btn-logout" title="Sair">
+                        <i class="fas fa-door-open" style="font-size: 1.1rem;"></i>
+                    </button>
+                </div>
 
                 <!-- Busca do Veículo -->
                 <div class="card-premium">
@@ -94,13 +115,11 @@
                         Buscar Veículo
                     </h3>
                     <form id="search-form">
-                        <div class="form-group">
+                        <div class="form-group" style="position: relative;">
                             <label for="search-input">Placa ou Chassi</label>
-                            <div class="input-icon-wrapper">
-                                <input type="text" id="search-input" class="form-input"
-                                    placeholder="Ex: ABC1D23 ou Chassi..." required autocomplete="off">
-                                <i class="fas fa-car"></i>
-                            </div>
+                            <input type="text" id="search-input" class="form-input" required autocomplete="off">
+                            <!-- Dropdown de Sugestões (Autocomplete) -->
+                            <div id="search-suggestions" class="autocomplete-dropdown"></div>
                         </div>
                         <button type="submit" class="btn-premium">
                             <i class="fas fa-search"></i>
@@ -121,6 +140,10 @@
                             <span class="info-label">Chassi:</span>
                             <span class="info-value" id="info-chassi">-</span>
                         </div>
+                        <div class="info-row">
+                            <span class="info-label">Concessionária:</span>
+                            <span class="info-value" id="info-concessionaria">-</span>
+                        </div>
     
                         <div class="info-row">
                             <span class="info-label">Cadastrado em:</span>
@@ -138,18 +161,15 @@
                     <form id="register-form">
                         <div class="form-group">
                             <label for="reg-placa">Placa</label>
-                            <div class="input-icon-wrapper">
-                                <input type="text" id="reg-placa" class="form-input" placeholder="Ex: ABC1D23" required>
-                                <i class="fas fa-id-card"></i>
-                            </div>
+                            <input type="text" id="reg-placa" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label for="reg-chassi">Chassi</label>
-                            <div class="input-icon-wrapper">
-                                <input type="text" id="reg-chassi" class="form-input" placeholder="Digite o Chassi..."
-                                    required>
-                                <i class="fas fa-barcode"></i>
-                            </div>
+                            <input type="text" id="reg-chassi" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-concessionaria">Concessionária Vendedora</label>
+                            <input type="text" id="reg-concessionaria" class="form-input" required>
                         </div>
     
                         <button type="submit" class="btn-premium btn-secondary">
@@ -161,157 +181,73 @@
 
             </section>
 
-            <!-- Trilha do Plano de Fidelidade -->
+            <!-- Painel de Controle de Revisões (Circuito de Estrada Premium) -->
             <section class="map-container">
-                <div class="map-header">
-                    <div>
-                        <h2>Plano de Fidelidade</h2>
-                        <p
-                            style="font-size: 1.3rem; font-weight: 800; color: var(--brand-red); text-transform: uppercase;">
-                            San Marino</p>
+
+                <!-- O Tabuleiro de Fidelidade Baseado na Imagem nota10.png -->
+                <div class="fidelity-board">
+                    <!-- Overlays das revisões sobre os círculos desenhados na imagem -->
+                    <!-- 1ª Revisão -->
+                    <div class="revision-overlay" data-revision="1" style="left: 38.3%; top: 26.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
                     </div>
-                    <p>CADA REVISÃO TE LEVA MAIS LONGE!</p>
+                    <!-- 2ª Revisão -->
+                    <div class="revision-overlay" data-revision="2" style="left: 55.4%; top: 26.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 3ª Revisão -->
+                    <div class="revision-overlay" data-revision="3" style="left: 71.9%; top: 26.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 4ª Revisão -->
+                    <div class="revision-overlay" data-revision="4" style="left: 81.8%; top: 40.5%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 5ª Revisão -->
+                    <div class="revision-overlay" data-revision="5" style="left: 63.8%; top: 48.6%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 6ª Revisão -->
+                    <div class="revision-overlay" data-revision="6" style="left: 46.4%; top: 48.6%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 7ª Revisão -->
+                    <div class="revision-overlay" data-revision="7" style="left: 19.5%; top: 54%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 8ª Revisão -->
+                    <div class="revision-overlay" data-revision="8" style="left: 40.7%; top: 69.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 9ª Revisão -->
+                    <div class="revision-overlay" data-revision="9" style="left: 56.1%; top: 69.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
+                    <!-- 10ª Revisão -->
+                    <div class="revision-overlay" data-revision="10" style="left: 71.5%; top: 69.8%;">
+                        <div class="check-mark">
+                            <i class="fas fa-check"></i>
+                        </div>
+                    </div>
                 </div>
-
-                <!-- A Estrada Interativa -->
-                <div class="road-circuit">
-
-                    <!-- Nível 1: Estrada (Esquerda para Direita) -->
-                    <div class="road-level">
-                        <!-- Bandeira de Início -->
-                        <div class="flag flag-inicio">
-                            <div class="flag-pin"></div>
-                            <div class="flag-banner">Início</div>
-                            <div class="flag-pole"></div>
-                        </div>
-
-                        <!-- 1ª Revisão -->
-                        <div class="road-stop" data-revision="1">
-                            <div class="stop-circle">
-                                <span class="stop-label">1ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">5% de Desconto</div>
-                        </div>
-
-                        <!-- 2ª Revisão -->
-                        <div class="road-stop" data-revision="2">
-                            <div class="stop-circle">
-                                <span class="stop-label">2ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">7% de Desconto</div>
-                        </div>
-
-                        <!-- 3ª Revisão -->
-                        <div class="road-stop" data-revision="3">
-                            <div class="stop-circle">
-                                <span class="stop-label">3ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">10% de Desconto</div>
-                        </div>
-                    </div>
-
-                    <!-- Curva 1: Conecta Nível 1 ao Nível 2 (Lado Direito) -->
-                    <div class="road-curve road-curve-right"></div>
-                    <!-- 4ª Revisão posicionada na curva direita -->
-                    <div class="road-stop stop-curve stop-curve-4" data-revision="4">
-                        <div class="stop-circle">
-                            <span class="stop-label">4ª</span>
-                            <span class="stop-sublabel">Revisão</span>
-                            <div class="check-overlay"><i class="fas fa-check"></i></div>
-                        </div>
-                        <div class="stop-discount">12% de Desconto</div>
-                    </div>
-
-                    <!-- Nível 2: Estrada (Direita para Esquerda) -->
-                    <div class="road-level" style="flex-direction: row-reverse;">
-                        <!-- 5ª Revisão (Aparece antes visualmente indo para a esquerda) -->
-                        <div class="road-stop" data-revision="5">
-                            <div class="stop-circle">
-                                <span class="stop-label">5ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">15% de Desconto</div>
-                        </div>
-
-                        <!-- 6ª Revisão -->
-                        <div class="road-stop" data-revision="6">
-                            <div class="stop-circle">
-                                <span class="stop-label">6ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">16% de Desconto</div>
-                        </div>
-                    </div>
-
-                    <!-- Curva 2: Conecta Nível 2 ao Nível 3 (Lado Esquerdo) -->
-                    <div class="road-curve road-curve-left"></div>
-                    <!-- 7ª Revisão posicionada na curva esquerda -->
-                    <div class="road-stop stop-curve stop-curve-7" data-revision="7">
-                        <div class="stop-circle">
-                            <span class="stop-label">7ª</span>
-                            <span class="stop-sublabel">Revisão</span>
-                            <div class="check-overlay"><i class="fas fa-check"></i></div>
-                        </div>
-                        <div class="stop-discount">17% de Desconto</div>
-                    </div>
-
-                    <!-- Nível 3: Estrada (Esquerda para Direita) -->
-                    <div class="road-level">
-                        <!-- 8ª Revisão -->
-                        <div class="road-stop" data-revision="8">
-                            <div class="stop-circle">
-                                <span class="stop-label">8ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">18% de Desconto</div>
-                        </div>
-
-                        <!-- 9ª Revisão -->
-                        <div class="road-stop" data-revision="9">
-                            <div class="stop-circle">
-                                <span class="stop-label">9ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">19% de Desconto</div>
-                        </div>
-
-                        <!-- 10ª Revisão -->
-                        <div class="road-stop" data-revision="10">
-                            <div class="stop-circle">
-                                <span class="stop-label">10ª</span>
-                                <span class="stop-sublabel">Revisão</span>
-                                <div class="check-overlay"><i class="fas fa-check"></i></div>
-                            </div>
-                            <div class="stop-discount">20% de Desconto</div>
-                        </div>
-
-                        <!-- Bandeira de Chegada -->
-                        <div class="flag flag-chegada">
-                            <div class="flag-pin"></div>
-                            <div class="flag-banner">Chegada!</div>
-                            <div class="flag-pole"></div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- Rodapé interno do folheto -->
-                <div class="benefits-badge">
-                    <i class="fas fa-trophy"></i>
-                    <p>A CADA REVISÃO VOCÊ GANHA <span>BENEFÍCIOS EXCLUSIVOS!</span></p>
-                </div>
-
-                <p class="footnote">*Descontos válidos apenas para serviços realizados na concessionária.</p>
             </section>
         </main>
 
@@ -371,14 +307,108 @@
             </div>
         </div>
 
+        <!-- Botão Flutuante Gerar Voucher -->
+        <button id="btn-gerar-voucher" class="btn-voucher-float" title="Gerar Voucher">
+            <i class="fas fa-ticket-alt"></i>
+            <span>Gerar Voucher</span>
+        </button>
 
+        <!-- MODAL: Visualização e Geração do Voucher -->
+        <div class="modal-overlay voucher-modal" id="voucher-modal">
+            <div class="modal-content voucher-modal-content">
+                <button class="modal-close" id="close-voucher">&times;</button>
+                
+                <div id="voucher-print-area" class="voucher-print-area">
+                    <!-- Cabeçalho com dados do veículo -->
+                    <div class="voucher-vehicle-header">
+                        <h2>Plano de Fidelidade San Marino</h2>
+                        <div class="voucher-vehicle-grid">
+                            <div><strong>Placa:</strong> <span id="voucher-placa">-</span></div>
+                            <div><strong>Chassi:</strong> <span id="voucher-chassi">-</span></div>
+                            <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
+                        </div>
+                    </div>
 
-        <!-- Rodapé Principal -->
-        <footer>
-            <div class="footer-logo">
-                SAN<span class="bars">///</span>MARINO
+                    <!-- Card de Recomendação -->
+                    <div class="voucher-recommendation-card">
+                        <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
+                    </div>
+
+                    <!-- Tabuleiro de Fidelidade -->
+                    <div class="voucher-board-wrapper">
+                        <div class="fidelity-board voucher-fidelity-board" id="voucher-fidelity-board">
+                            <!-- Overlays das revisões (sincronizados dinamicamente pelo JS) -->
+                            <!-- 1ª Revisão -->
+                            <div class="revision-overlay" data-revision="1" style="left: 38.3%; top: 26.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 2ª Revisão -->
+                            <div class="revision-overlay" data-revision="2" style="left: 55.4%; top: 26.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 3ª Revisão -->
+                            <div class="revision-overlay" data-revision="3" style="left: 71.9%; top: 26.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 4ª Revisão -->
+                            <div class="revision-overlay" data-revision="4" style="left: 81.8%; top: 40.5%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 5ª Revisão -->
+                            <div class="revision-overlay" data-revision="5" style="left: 63.8%; top: 48.6%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 6ª Revisão -->
+                            <div class="revision-overlay" data-revision="6" style="left: 46.4%; top: 48.6%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 7ª Revisão -->
+                            <div class="revision-overlay" data-revision="7" style="left: 19.5%; top: 54%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 8ª Revisão -->
+                            <div class="revision-overlay" data-revision="8" style="left: 40.7%; top: 69.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 9ª Revisão -->
+                            <div class="revision-overlay" data-revision="9" style="left: 56.1%; top: 69.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                            <!-- 10ª Revisão -->
+                            <div class="revision-overlay" data-revision="10" style="left: 71.5%; top: 69.8%;">
+                                <div class="check-mark">
+                                    <i class="fas fa-check"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="voucher-modal-actions">
+                    <button id="btn-print-voucher" class="btn-premium">
+                        <i class="fas fa-print"></i> Imprimir Voucher
+                    </button>
+                </div>
             </div>
-        </footer>
+        </div>
 
     </div><!-- /#main-app -->
 
@@ -390,6 +420,7 @@
 
     <!-- SDKs do Firebase (Versão Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
 
     <!-- Configuração e Arquivos de Código -->
