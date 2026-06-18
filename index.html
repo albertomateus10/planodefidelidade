@@ -183,70 +183,9 @@
 
             <!-- Painel de Controle de Revisões (Circuito de Estrada Premium) -->
             <section class="map-container">
-
-                <!-- O Tabuleiro de Fidelidade Baseado na Imagem nota10.png -->
-                <div class="fidelity-board">
-                    <!-- Overlays das revisões sobre os círculos desenhados na imagem -->
-                    <!-- 1ª Revisão -->
-                    <div class="revision-overlay" data-revision="1" style="left: 38.3%; top: 25.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 2ª Revisão -->
-                    <div class="revision-overlay" data-revision="2" style="left: 55.4%; top: 25.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 3ª Revisão -->
-                    <div class="revision-overlay" data-revision="3" style="left: 72.0%; top: 25.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 4ª Revisão -->
-                    <div class="revision-overlay" data-revision="4" style="left: 83.5%; top: 38.3%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 5ª Revisão -->
-                    <div class="revision-overlay" data-revision="5" style="left: 65.1%; top: 47.4%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 6ª Revisão -->
-                    <div class="revision-overlay" data-revision="6" style="left: 47.7%; top: 47.4%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 7ª Revisão -->
-                    <div class="revision-overlay" data-revision="7" style="left: 30.6%; top: 52.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 8ª Revisão -->
-                    <div class="revision-overlay" data-revision="8" style="left: 41.9%; top: 68.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 9ª Revisão -->
-                    <div class="revision-overlay" data-revision="9" style="left: 57.3%; top: 68.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
-                    <!-- 10ª Revisão -->
-                    <div class="revision-overlay" data-revision="10" style="left: 72.7%; top: 68.6%;">
-                        <div class="check-mark">
-                            <i class="fas fa-check"></i>
-                        </div>
-                    </div>
+                <!-- O Tabuleiro de Fidelidade Baseado na imagem nota10.png -->
+                <div class="fidelity-board" id="main-fidelity-board">
+                    <!-- Checks são inseridos dinamicamente pelo JS ao clicar -->
                 </div>
             </section>
         </main>
@@ -334,72 +273,12 @@
                         <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
                     </div>
 
-                    <!-- Tabuleiro de Fidelidade -->
-                    <div class="voucher-board-wrapper">
-                        <div class="fidelity-board voucher-fidelity-board" id="voucher-fidelity-board">
-                            <!-- Overlays das revisões (sincronizados dinamicamente pelo JS) -->
-                            <!-- 1ª Revisão -->
-                            <div class="revision-overlay" data-revision="1" style="left: 38.3%; top: 25.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 2ª Revisão -->
-                            <div class="revision-overlay" data-revision="2" style="left: 55.4%; top: 25.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 3ª Revisão -->
-                            <div class="revision-overlay" data-revision="3" style="left: 72.0%; top: 25.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 4ª Revisão -->
-                            <div class="revision-overlay" data-revision="4" style="left: 83.5%; top: 38.3%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 5ª Revisão -->
-                            <div class="revision-overlay" data-revision="5" style="left: 65.1%; top: 47.4%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 6ª Revisão -->
-                            <div class="revision-overlay" data-revision="6" style="left: 47.7%; top: 47.4%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 7ª Revisão -->
-                            <div class="revision-overlay" data-revision="7" style="left: 30.6%; top: 52.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 8ª Revisão -->
-                            <div class="revision-overlay" data-revision="8" style="left: 41.9%; top: 68.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 9ª Revisão -->
-                            <div class="revision-overlay" data-revision="9" style="left: 57.3%; top: 68.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
-                            </div>
-                            <!-- 10ª Revisão -->
-                            <div class="revision-overlay" data-revision="10" style="left: 72.7%; top: 68.6%;">
-                                <div class="check-mark">
-                                    <i class="fas fa-check"></i>
-                                </div>
+                        <!-- Tabuleiro de Fidelidade -->
+                        <div class="voucher-board-wrapper">
+                            <div class="fidelity-board voucher-fidelity-board" id="voucher-fidelity-board">
+                                <!-- Checks sincronizados dinamicamente pelo JS -->
                             </div>
                         </div>
-                    </div>
                 </div>
 
                 <div class="voucher-modal-actions">

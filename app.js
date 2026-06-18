@@ -54,7 +54,8 @@ const elements = {
     userMenu: document.getElementById('user-menu'),
     
     // Grid e Revisões
-    stops: document.querySelectorAll('.revision-overlay'),
+    mainBoard: document.getElementById('main-fidelity-board'),
+    voucherBoard: document.getElementById('voucher-fidelity-board'),
     
     // Voucher
     btnGerarVoucher: document.getElementById('btn-gerar-voucher'),
@@ -507,19 +508,39 @@ function setupEventListeners() {
         });
     }
 
-    // Interatividade da Trilha de Revisões
-    elements.stops.forEach(stop => {
-        stop.addEventListener('click', async () => {
-            const revisionNum = parseInt(stop.getAttribute('data-revision'));
-            
-            if (!currentVehicle) {
-                showToast("Busque ou cadastre um veículo antes para marcar as revisões.", "error");
+    // Clique livre no tabuleiro principal para adicionar/remover checks
+    if (elements.mainBoard) {
+        elements.mainBoard.addEventListener('click', async (e) => {
+            // Se clicou em um check existente, remove
+            const existing = e.target.closest('.check-mark-free');
+            if (existing) {
+                if (!currentVehicle) return;
+                const idx = parseInt(existing.dataset.index);
+                const marcacoes = [...(currentVehicle.marcacoes || [])];
+                marcacoes.splice(idx, 1);
+                await saveCheckmarks(marcacoes);
                 return;
             }
 
-            await toggleRevision(revisionNum, stop);
+            if (!currentVehicle) {
+                showToast("Busque ou cadastre um veículo antes de marcar as revisões.", "error");
+                return;
+            }
+
+            const marcacoes = [...(currentVehicle.marcacoes || [])];
+            if (marcacoes.length >= 10) {
+                showToast("Máximo de 10 revisões atingido. Clique em um check para remover.", "error");
+                return;
+            }
+
+            const rect = elements.mainBoard.getBoundingClientRect();
+            const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(2));
+            const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(2));
+
+            marcacoes.push({ x, y });
+            await saveCheckmarks(marcacoes);
         });
-    });
+    }
 
     // Event Listener do Logout
     const btnLogout = document.getElementById('btn-logout');
@@ -646,16 +667,7 @@ async function registerVehicle(placa, chassi, concessionaria) {
             placa: placa,
             chassi: chassi,
             concessionaria: concessionaria,
-            revisao_1: false,
-            revisao_2: false,
-            revisao_3: false,
-            revisao_4: false,
-            revisao_5: false,
-            revisao_6: false,
-            revisao_7: false,
-            revisao_8: false,
-            revisao_9: false,
-            revisao_10: false,
+            marcacoes: [],
             created_at: firebase.firestore.FieldValue.serverTimestamp(),
             updated_at: firebase.firestore.FieldValue.serverTimestamp()
         };
@@ -682,43 +694,38 @@ async function registerVehicle(placa, chassi, concessionaria) {
     }
 }
 
-// Alterna o status de uma revisão
-async function toggleRevision(num, stopElement) {
+// Salva marcacoes no Firestore e re-renderiza
+async function saveCheckmarks(marcacoes) {
     if (!db || !currentVehicle) return;
-
-    const columnName = `revisao_${num}`;
-    const newStatus = !currentVehicle[columnName];
-
-    // Atualização Visual Otimista
-    if (newStatus) {
-        stopElement.classList.add('completed');
-    } else {
-        stopElement.classList.remove('completed');
-    }
-
     try {
-        const docRef = db.collection('veiculos').doc(currentVehicle.id);
-        const updateObj = {};
-        updateObj[columnName] = newStatus;
-        updateObj['updated_at'] = firebase.firestore.FieldValue.serverTimestamp();
-
-        await docRef.update(updateObj);
-
-        // Atualiza o estado na memória local
-        currentVehicle[columnName] = newStatus;
-        updateRoadVisuals(currentVehicle); // Atualiza os contadores e a barra de progresso
-        showToast(`Revisão ${num}ª alterada com sucesso!`, "success");
+        await db.collection('veiculos').doc(currentVehicle.id).update({
+            marcacoes,
+            updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        currentVehicle.marcacoes = marcacoes;
+        renderCheckmarks(marcacoes, elements.mainBoard);
+        renderCheckmarks(marcacoes, elements.voucherBoard);
     } catch (error) {
-        console.error(`Erro ao atualizar revisão no Firestore:`, error);
-        showToast(`Erro ao salvar revisão ${num}ª no Firebase.`, "error");
-        
-        // Reverte alteração visual em caso de erro
-        if (!newStatus) {
-            stopElement.classList.add('completed');
-        } else {
-            stopElement.classList.remove('completed');
-        }
+        console.error('Erro ao salvar marcações:', error);
+        showToast('Erro ao salvar no Firebase.', 'error');
     }
+}
+
+// Renderiza os checks livres em um board
+function renderCheckmarks(marcacoes, boardEl) {
+    if (!boardEl) return;
+    // Remove checks antigos
+    boardEl.querySelectorAll('.check-mark-free').forEach(el => el.remove());
+    // Adiciona cada marcação
+    (marcacoes || []).forEach((pos, idx) => {
+        const el = document.createElement('div');
+        el.className = 'check-mark-free';
+        el.dataset.index = idx;
+        el.style.left = pos.x + '%';
+        el.style.top  = pos.y + '%';
+        el.innerHTML = '<i class="fas fa-check"></i>';
+        boardEl.appendChild(el);
+    });
 }
 
 // 4.1 Autocomplete - Busca veículos enquanto o usuário digita
@@ -861,20 +868,14 @@ function displayVehicleData(vehicle) {
 function resetVehicleDisplay() {
     currentVehicle = null;
     elements.vehicleDetails.style.display = 'none';
-    elements.stops.forEach(stop => stop.classList.remove('completed'));
+    if (elements.mainBoard) elements.mainBoard.querySelectorAll('.check-mark-free').forEach(el => el.remove());
+    if (elements.voucherBoard) elements.voucherBoard.querySelectorAll('.check-mark-free').forEach(el => el.remove());
 }
 
 function updateRoadVisuals(vehicle) {
-    elements.stops.forEach(stop => {
-        const revisionNum = parseInt(stop.getAttribute('data-revision'));
-        const isCompleted = vehicle[`revisao_${revisionNum}`];
-        
-        if (isCompleted) {
-            stop.classList.add('completed');
-        } else {
-            stop.classList.remove('completed');
-        }
-    });
+    const marcacoes = vehicle.marcacoes || [];
+    renderCheckmarks(marcacoes, elements.mainBoard);
+    renderCheckmarks(marcacoes, elements.voucherBoard);
 }
 
 function showModal(modal) {
