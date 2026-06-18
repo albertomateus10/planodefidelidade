@@ -1467,9 +1467,14 @@ footer {
     }
     
     /* Ajustes específicos para a orientação Paisagem no PDF / Impressão */
+    .voucher-vehicle-header {
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
     .voucher-rec-img {
-        width: 230mm !important;
-        max-height: 165mm !important;
+        width: 220mm !important;
+        max-height: 155mm !important;
         height: auto !important;
         margin: 0 auto !important;
         border-radius: 20px !important;
@@ -1477,8 +1482,8 @@ footer {
     }
     
     .voucher-fidelity-board {
-        width: 230mm !important;
-        max-height: 165mm !important;
+        width: 220mm !important;
+        max-height: 155mm !important;
         margin: 0 auto !important;
         aspect-ratio: 2481 / 1748 !important;
     }
