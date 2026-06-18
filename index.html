@@ -281,9 +281,17 @@
                         </div>
                 </div>
 
+            <!-- Campo de WhatsApp para Envio -->
+            <div class="voucher-whatsapp-group" style="margin-top: 15px; border-top: 1px solid rgba(0,0,0,0.06); padding-top: 15px; padding-left: 5px; padding-right: 5px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="voucher-whatsapp-phone" style="text-transform: none; font-size: 0.78rem; font-weight: 600; color: var(--text-dark); margin-bottom: 6px;">WhatsApp do cliente (com DDD)</label>
+                    <input type="tel" id="voucher-whatsapp-phone" class="form-input" placeholder="Ex: 51999999999" required autocomplete="off" style="padding: 10px 12px; font-size: 0.85rem;">
+                </div>
+            </div>
+
                 <div class="voucher-modal-actions">
                     <button id="btn-print-voucher" class="btn-premium">
-                        <i class="fas fa-print"></i> Imprimir Voucher
+                        <i class="fas fa-paper-plane"></i> Enviar Voucher
                     </button>
                 </div>
             </div>
@@ -301,6 +309,9 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <!-- html2pdf.js para exportar PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
     <!-- Configuração e Arquivos de Código -->
     <script src="config.js"></script>
