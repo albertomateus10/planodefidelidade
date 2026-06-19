@@ -627,6 +627,7 @@ function setupEventListeners() {
                     console.error("Erro ao gerar PDF:", err);
                     showToast("Erro ao gerar o PDF do voucher.", "error");
                 });
+        });
     }
 
     // Event Listeners do Dashboard do Gestor
