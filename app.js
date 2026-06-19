@@ -587,16 +587,23 @@ function setupEventListeners() {
             showToast("Gerando PDF em alta definição...", "success");
             
             const element = document.getElementById('voucher-print-area');
+            
+            // Adiciona classe de exportação para fixar dimensões A4 Paisagem
+            element.classList.add('exporting-pdf');
+            
             const opt = {
-                margin:       [10, 10, 10, 10],
+                margin:       0,
                 filename:     `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 }, // Qualidade máxima
-                html2canvas:  { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false }, // Escala 3 para altíssima nitidez
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' } // Paisagem para duas páginas separadas
+                image:        { type: 'jpeg', quality: 1.0 },
+                html2canvas:  { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                // Sem opção pagebreak: o container tem exatamente 420mm (2×210mm), 
+                // o html2pdf divide automaticamente o canvas em 2 páginas exatas
             };
             
             // Executa a geração do PDF de alta definição e inicia o download
             html2pdf().set(opt).from(element).save().then(() => {
+                element.classList.remove('exporting-pdf');
                 showToast("PDF baixado com sucesso!", "success");
                 
                 // Fecha o modal após o download
@@ -604,6 +611,7 @@ function setupEventListeners() {
                     hideModal(elements.voucherModal);
                 }, 1000);
             }).catch(err => {
+                element.classList.remove('exporting-pdf');
                 console.error("Erro ao gerar PDF:", err);
                 showToast("Erro ao gerar o PDF do voucher.", "error");
             });

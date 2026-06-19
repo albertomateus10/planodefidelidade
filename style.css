@@ -1324,6 +1324,15 @@ footer {
     color: #1e272e;
 }
 
+/* Páginas do PDF */
+.voucher-pdf-page {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-sizing: border-box;
+}
+
 /* Cabeçalho do veículo no voucher */
 .voucher-vehicle-header {
     border-bottom: 2px dashed #ceced2;
@@ -1430,6 +1439,84 @@ footer {
         margin-top: 0;
         box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
     }
+}
+
+/* Estilos aplicados APENAS durante a geração do PDF com html2pdf */
+.voucher-print-area.exporting-pdf {
+    width: 297mm !important;  /* Largura exata A4 paisagem */
+    height: 420mm !important; /* 2 páginas A4 paisagem = 2 × 210mm — força corte exato na metade */
+    overflow: hidden !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    display: block !important;
+}
+
+/* Cada página ocupa exatamente 1 folha A4 paisagem */
+.voucher-print-area.exporting-pdf .voucher-pdf-page {
+    width: 297mm !important;
+    height: 210mm !important;
+    padding: 10mm !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    overflow: hidden !important;
+    /* SEM page-break: o html2pdf corta automaticamente no canvas pela altura */
+}
+
+.voucher-print-area.exporting-pdf .voucher-vehicle-header {
+    width: 100% !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
+    box-sizing: border-box !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-recommendation-card {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 !important; /* Zera margens externas herdadas */
+    box-sizing: border-box !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-rec-img {
+    max-width: 100% !important;
+    max-height: 135mm !important; /* Limita a altura para caber junto com o cabeçalho */
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    box-shadow: none !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-board-wrapper {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important; /* Zera margens externas herdadas */
+    padding: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-fidelity-board {
+    width: 240mm !important; /* Limita a largura do tabuleiro no PDF */
+    max-width: 240mm !important;
+    height: auto !important;
+    aspect-ratio: 2481 / 1748 !important;
+    margin: 0 auto !important; /* Centraliza e zera margens verticais */
+    padding: 0 !important;
+    box-shadow: none !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-fidelity-board .board-bg-img {
+    width: 100% !important;
+    height: auto !important;
 }
 
 /* Configuração de Impressão */

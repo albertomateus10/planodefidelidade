@@ -259,29 +259,31 @@
                 <button class="modal-close" id="close-voucher">&times;</button>
                 
                 <div id="voucher-print-area" class="voucher-print-area">
-                    <!-- Cabeçalho com dados do veículo -->
-                    <div class="voucher-vehicle-header">
-                        <h2>Plano de Fidelidade San Marino</h2>
-                        <div class="voucher-vehicle-grid">
-                            <div><strong>Placa:</strong> <span id="voucher-placa">-</span></div>
-                            <div><strong>Chassi:</strong> <span id="voucher-chassi">-</span></div>
-                            <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
+                    <!-- Página 1: Dados do Veículo e Recomendação -->
+                    <div class="voucher-pdf-page">
+                        <!-- Cabeçalho com dados do veículo -->
+                        <div class="voucher-vehicle-header">
+                            <h2>Plano de Fidelidade San Marino</h2>
+                            <div class="voucher-vehicle-grid">
+                                <div><strong>Placa:</strong> <span id="voucher-placa">-</span></div>
+                                <div><strong>Chassi:</strong> <span id="voucher-chassi">-</span></div>
+                                <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Card de Recomendação (Página 1 do PDF) -->
+                        <div class="voucher-recommendation-card">
+                            <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
                         </div>
                     </div>
 
-                    <!-- Card de Recomendação (Página 1 do PDF) -->
-                    <div class="voucher-recommendation-card">
-                        <img src="recomendacao.jpeg" alt="Recomendação San Marino Nota 10" class="voucher-rec-img">
-                    </div>
-
-                    <!-- Quebra de Página no PDF (html2pdf) -->
-                    <div class="html2pdf__page-break"></div>
-
-                    <!-- Tabuleiro de Fidelidade (Página 2 do PDF) -->
-                    <div class="voucher-board-wrapper">
-                        <div class="fidelity-board voucher-fidelity-board" id="voucher-fidelity-board">
-                            <img src="nota10.png" alt="Tabuleiro de Fidelidade" class="board-bg-img" draggable="false">
-                            <!-- Checks sincronizados dinamicamente pelo JS -->
+                    <!-- Página 2: Tabuleiro de Fidelidade -->
+                    <div class="voucher-pdf-page">
+                        <div class="voucher-board-wrapper">
+                            <div class="fidelity-board voucher-fidelity-board" id="voucher-fidelity-board">
+                                <img src="nota10.png" alt="Tabuleiro de Fidelidade" class="board-bg-img" draggable="false">
+                                <!-- Checks sincronizados dinamicamente pelo JS -->
+                            </div>
                         </div>
                     </div>
                 </div>
