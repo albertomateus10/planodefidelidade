@@ -97,6 +97,12 @@
             <!-- Painel Lateral: Busca, Informações e Cadastro -->
             <section class="panel-side">
 
+                <!-- Botão de Acesso do Gestor -->
+                <button id="btn-manager-dashboard" class="btn-premium btn-manager-dashboard" style="margin-bottom: 5px; background: linear-gradient(135deg, #00b894, #00d2d3); box-shadow: 0 4px 12px rgba(0, 184, 148, 0.25);">
+                    <i class="fas fa-chart-line"></i>
+                    Acesso do Gestor
+                </button>
+
                 <!-- Menu do Usuário Logado -->
                 <div class="user-menu" id="user-menu">
                     <div style="display: flex; align-items: center; gap: 6px;">
@@ -292,6 +298,93 @@
                     <button id="btn-print-voucher" class="btn-premium">
                         <i class="fas fa-download"></i> Gerar PDF
                     </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Dashboard de Acesso do Gestor -->
+        <div class="modal-overlay" id="manager-dashboard-modal">
+            <div class="modal-content manager-modal-content">
+                <button class="modal-close" id="close-manager-dashboard">&times;</button>
+                
+                <h3 class="modal-title">
+                    <i class="fas fa-chart-line" style="color: var(--brand-green);"></i> 
+                    Painel do Gestor - Dashboard
+                </h3>
+                <p class="modal-desc">
+                    Consulte as estatísticas e informações detalhadas de todos os veículos cadastrados no sistema.
+                </p>
+
+                <!-- Cards de Estatísticas / KPIs -->
+                <div class="dashboard-kpis">
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(0, 184, 148, 0.15), rgba(0, 184, 148, 0.05)); color: #00b894;"><i class="fas fa-car"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-total-vehicles">0</span>
+                            <span class="kpi-label">Veículos Cadastrados</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(9, 132, 227, 0.15), rgba(9, 132, 227, 0.05)); color: #0984e3;"><i class="fas fa-check-double"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-total-revisions">0</span>
+                            <span class="kpi-label">Total de Revisões</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(232, 67, 147, 0.15), rgba(232, 67, 147, 0.05)); color: #e84393;"><i class="fas fa-store"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-top-concessionaria">-</span>
+                            <span class="kpi-label">Concessionária Líder</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Barra de Filtros e Busca -->
+                <div class="dashboard-filters">
+                    <div class="filter-group">
+                        <label for="filter-placa">Filtrar por Placa</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="filter-placa" class="form-input filter-input" placeholder="Ex: ABC1D23" autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-chassi">Filtrar por Chassi</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-fingerprint"></i>
+                            <input type="text" id="filter-chassi" class="form-input filter-input" placeholder="Ex: 9BD..." autocomplete="off">
+                        </div>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-concessionaria">Filtrar por Concessionária</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-store"></i>
+                            <input type="text" id="filter-concessionaria" class="form-input filter-input" placeholder="Ex: San Marino" autocomplete="off">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabela de Resultados -->
+                <div class="dashboard-table-wrapper">
+                    <table class="dashboard-table" id="manager-table">
+                        <thead>
+                            <tr>
+                                <th>Placa</th>
+                                <th>Chassi</th>
+                                <th>Concessionária Vendedora</th>
+                                <th style="text-align: center;">Revisões Realizadas</th>
+                                <th style="text-align: center;">Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="manager-table-body">
+                            <!-- Inserido dinamicamente pelo JS -->
+                        </tbody>
+                    </table>
+                    <div class="dashboard-table-empty" id="manager-table-empty">
+                        <i class="fas fa-folder-open"></i>
+                        <span>Nenhum veículo encontrado com os filtros aplicados.</span>
+                    </div>
                 </div>
             </div>
         </div>

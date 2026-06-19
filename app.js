@@ -4,6 +4,7 @@
 let db = null; // Banco de dados do Firestore
 let currentVehicle = null;
 let isAdmin = true;
+let managerVehiclesList = []; // Cache local de veículos para o dashboard do gestor
 
 // Configurações ativas
 let activeConfig = {
@@ -66,6 +67,19 @@ const elements = {
     voucherChassi: document.getElementById('voucher-chassi'),
     voucherConcessionaria: document.getElementById('voucher-concessionaria'),
     voucherData: document.getElementById('voucher-data'),
+    
+    // Dashboard do Gestor
+    btnManagerDashboard: document.getElementById('btn-manager-dashboard'),
+    managerModal: document.getElementById('manager-dashboard-modal'),
+    closeManagerDashboard: document.getElementById('close-manager-dashboard'),
+    managerTableBody: document.getElementById('manager-table-body'),
+    managerTableEmpty: document.getElementById('manager-table-empty'),
+    kpiTotalVehicles: document.getElementById('kpi-total-vehicles'),
+    kpiTotalRevisions: document.getElementById('kpi-total-revisions'),
+    kpiTopConcessionaria: document.getElementById('kpi-top-concessionaria'),
+    filterPlaca: document.getElementById('filter-placa'),
+    filterChassi: document.getElementById('filter-chassi'),
+    filterConcessionaria: document.getElementById('filter-concessionaria'),
     
     // Toast de notificação
     toast: document.getElementById('toast'),
@@ -582,41 +596,61 @@ function setupEventListeners() {
     }
 
     if (elements.btnPrintVoucher) {
-        elements.btnPrintVoucher.addEventListener('click', () => {
-            // Mostra toast de progresso
+        elements.btnPrintVoucher.addEventListener('click', async () => {
             showToast("Gerando PDF em alta definição...", "success");
-            
+
             const element = document.getElementById('voucher-print-area');
-            
-            // Adiciona classe de exportação para fixar dimensões A4 Paisagem
+
+            // 1. Aplica classe que fixa as dimensões A4 Paisagem
             element.classList.add('exporting-pdf');
-            
+
+            // 2. Aguarda o browser recalcular o layout com as novas dimensões CSS
+            await new Promise(r => setTimeout(r, 150));
+
             const opt = {
-                margin:       0,
-                filename:     `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
-                image:        { type: 'jpeg', quality: 1.0 },
-                html2canvas:  { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'landscape' }
-                // Sem opção pagebreak: o container tem exatamente 420mm (2×210mm), 
-                // o html2pdf divide automaticamente o canvas em 2 páginas exatas
+                margin:      0,
+                filename:    `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
+                image:       { type: 'jpeg', quality: 1.0 },
+                html2canvas: { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false },
+                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
-            
-            // Executa a geração do PDF de alta definição e inicia o download
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.classList.remove('exporting-pdf');
-                showToast("PDF baixado com sucesso!", "success");
-                
-                // Fecha o modal após o download
-                setTimeout(() => {
-                    hideModal(elements.voucherModal);
-                }, 1000);
-            }).catch(err => {
-                element.classList.remove('exporting-pdf');
-                console.error("Erro ao gerar PDF:", err);
-                showToast("Erro ao gerar o PDF do voucher.", "error");
-            });
+
+            // 3. Gera e baixa o PDF
+            html2pdf().set(opt).from(element).save()
+                .then(() => {
+                    element.classList.remove('exporting-pdf');
+                    showToast("PDF baixado com sucesso!", "success");
+                    setTimeout(() => hideModal(elements.voucherModal), 1000);
+                })
+                .catch(err => {
+                    element.classList.remove('exporting-pdf');
+                    console.error("Erro ao gerar PDF:", err);
+                    showToast("Erro ao gerar o PDF do voucher.", "error");
+                });
+    }
+
+    // Event Listeners do Dashboard do Gestor
+    if (elements.btnManagerDashboard) {
+        elements.btnManagerDashboard.addEventListener('click', () => {
+            openManagerDashboard();
         });
     }
+
+    if (elements.closeManagerDashboard) {
+        elements.closeManagerDashboard.addEventListener('click', () => {
+            hideModal(elements.managerModal);
+        });
+    }
+
+    // Filtros em tempo real
+    const filterInputs = [elements.filterPlaca, elements.filterChassi, elements.filterConcessionaria];
+    filterInputs.forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                filterManagerDashboardTable();
+            });
+        }
+    });
 }
 
 // 4. Funções do Firestore
@@ -944,4 +978,160 @@ function showLoader(show) {
         btn.disabled = false;
         btn.innerHTML = '<i class="fas fa-search"></i> Buscar';
     }
+}
+
+// ===== LÓGICA DO DASHBOARD DO GESTOR (CONSULTA E KPI) =====
+
+async function openManagerDashboard() {
+    if (!db) {
+        showToast("Banco de dados Firebase não inicializado.", "error");
+        return;
+    }
+
+    // Limpa filtros antigos
+    if (elements.filterPlaca) elements.filterPlaca.value = '';
+    if (elements.filterChassi) elements.filterChassi.value = '';
+    if (elements.filterConcessionaria) elements.filterConcessionaria.value = '';
+
+    // Abre o modal
+    showModal(elements.managerModal);
+
+    // Mostra indicador de carregamento
+    if (elements.managerTableBody) {
+        elements.managerTableBody.innerHTML = `
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                    <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 10px; display: block; color: var(--brand-green);"></i>
+                    Carregando dados do servidor...
+                </td>
+            </tr>
+        `;
+    }
+
+    try {
+        // Busca todos os veículos
+        const snapshot = await db.collection('veiculos').get();
+        managerVehiclesList = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+
+        // Calcula Métricas de KPI
+        const totalVehicles = managerVehiclesList.length;
+        const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
+
+        // Concessionária Líder
+        const concCounts = {};
+        managerVehiclesList.forEach(v => {
+            const conc = (v.concessionaria || 'Não informada').trim();
+            if (conc) {
+                concCounts[conc] = (concCounts[conc] || 0) + 1;
+            }
+        });
+
+        let topConc = 'Nenhuma';
+        let maxCount = 0;
+        for (const [conc, count] of Object.entries(concCounts)) {
+            if (count > maxCount) {
+                maxCount = count;
+                topConc = conc;
+            }
+        }
+
+        // Atualiza elementos na tela
+        if (elements.kpiTotalVehicles) elements.kpiTotalVehicles.textContent = totalVehicles;
+        if (elements.kpiTotalRevisions) elements.kpiTotalRevisions.textContent = totalRevisions;
+        if (elements.kpiTopConcessionaria) {
+            elements.kpiTopConcessionaria.textContent = topConc;
+            elements.kpiTopConcessionaria.title = topConc;
+        }
+
+        // Renderiza a tabela
+        renderManagerDashboardTable(managerVehiclesList);
+
+    } catch (error) {
+        console.error("Erro ao carregar dashboard:", error);
+        showToast("Erro ao carregar dados do gestor.", "error");
+        if (elements.managerTableBody) {
+            elements.managerTableBody.innerHTML = `
+                <tr>
+                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--brand-red);">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-bottom: 10px; display: block;"></i>
+                        Erro ao carregar os dados do Firebase.
+                    </td>
+                </tr>
+            `;
+        }
+    }
+}
+
+function renderManagerDashboardTable(vehicles) {
+    if (!elements.managerTableBody) return;
+    elements.managerTableBody.innerHTML = '';
+
+    if (vehicles.length === 0) {
+        if (elements.managerTableEmpty) elements.managerTableEmpty.style.display = 'flex';
+        return;
+    }
+
+    if (elements.managerTableEmpty) elements.managerTableEmpty.style.display = 'none';
+
+    vehicles.forEach(vehicle => {
+        const tr = document.createElement('tr');
+
+        const placaCell = document.createElement('td');
+        placaCell.style.fontWeight = '700';
+        placaCell.textContent = vehicle.placa || '-';
+
+        const chassiCell = document.createElement('td');
+        chassiCell.textContent = vehicle.chassi || '-';
+
+        const concessionariaCell = document.createElement('td');
+        concessionariaCell.textContent = vehicle.concessionaria || '-';
+
+        const revisoesCell = document.createElement('td');
+        revisoesCell.style.textAlign = 'center';
+        const numMarcacoes = vehicle.marcacoes ? vehicle.marcacoes.length : 0;
+        revisoesCell.innerHTML = `<span class="badge-table-revisions">${numMarcacoes} / 10</span>`;
+
+        const actionsCell = document.createElement('td');
+        actionsCell.style.textAlign = 'center';
+        
+        const viewBtn = document.createElement('button');
+        viewBtn.className = 'btn-table-action';
+        viewBtn.innerHTML = '<i class="fas fa-eye"></i> Ver no Tabuleiro';
+        viewBtn.addEventListener('click', () => {
+            // Carrega veículo no app principal
+            currentVehicle = vehicle;
+            displayVehicleData(vehicle);
+            updateRoadVisuals(vehicle);
+            hideModal(elements.managerModal);
+            showToast(`Veículo ${vehicle.placa} carregado!`, "success");
+        });
+
+        actionsCell.appendChild(viewBtn);
+
+        tr.appendChild(placaCell);
+        tr.appendChild(chassiCell);
+        tr.appendChild(concessionariaCell);
+        tr.appendChild(revisoesCell);
+        tr.appendChild(actionsCell);
+
+        elements.managerTableBody.appendChild(tr);
+    });
+}
+
+function filterManagerDashboardTable() {
+    const valPlaca = elements.filterPlaca ? elements.filterPlaca.value.trim().toUpperCase() : '';
+    const valChassi = elements.filterChassi ? elements.filterChassi.value.trim().toUpperCase() : '';
+    const valConc = elements.filterConcessionaria ? elements.filterConcessionaria.value.trim().toUpperCase() : '';
+
+    const filtered = managerVehiclesList.filter(v => {
+        const matchPlaca = !valPlaca || (v.placa && v.placa.toUpperCase().includes(valPlaca));
+        const matchChassi = !valChassi || (v.chassi && v.chassi.toUpperCase().includes(valChassi));
+        const matchConc = !valConc || (v.concessionaria && v.concessionaria.toUpperCase().includes(valConc));
+        return matchPlaca && matchChassi && matchConc;
+    });
+
+    renderManagerDashboardTable(filtered);
 }
