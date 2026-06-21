@@ -1,4 +1,4 @@
-# 🏎️ Plano de Fidelidade San Marino Nota 10
+po# 🏎️ Plano de Fidelidade San Marino Nota 10
 
 Aplicação web para gerenciamento do Plano de Fidelidade San Marino, com trilha interativa de revisões e banco de dados Firebase Firestore em tempo real.
 
