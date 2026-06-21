@@ -316,13 +316,20 @@
             <div class="modal-content manager-modal-content">
                 <button class="modal-close" id="close-manager-dashboard">&times;</button>
                 
-                <h3 class="modal-title">
-                    <i class="fas fa-chart-line" style="color: var(--brand-green);"></i> 
-                    Painel do Gestor - Dashboard
-                </h3>
-                <p class="modal-desc">
-                    Consulte as estatísticas e informações detalhadas de todos os veículos cadastrados no sistema.
-                </p>
+                <div class="dashboard-header-wrapper" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap; margin-bottom: 20px; padding-right: 30px;">
+                    <div style="display: flex; flex-direction: column;">
+                        <h3 class="modal-title" style="margin-bottom: 5px;">
+                            <i class="fas fa-chart-line" style="color: var(--brand-green);"></i> 
+                            Painel do Gestor - Dashboard
+                        </h3>
+                        <p class="modal-desc" style="margin-bottom: 0;">
+                            Consulte as estatísticas e informações detalhadas de todos os veículos cadastrados no sistema.
+                        </p>
+                    </div>
+                    <button id="btn-export-excel" class="btn-premium" style="width: auto; padding: 10px 20px; font-size: 0.85rem; background: linear-gradient(135deg, #107c41, #1f9a55); box-shadow: 0 4px 12px rgba(16, 124, 65, 0.25); height: fit-content; text-transform: none; font-family: 'Montserrat', sans-serif; font-weight: 700;">
+                        <i class="fas fa-file-excel"></i> Exportar Excel
+                    </button>
+                </div>
 
                 <!-- Cards de Estatísticas / KPIs -->
                 <div class="dashboard-kpis">
@@ -352,6 +359,13 @@
                         <div class="kpi-data">
                             <span class="kpi-value" id="kpi-top-consultor">-</span>
                             <span class="kpi-label">Consultor Líder</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(162, 155, 254, 0.15), rgba(162, 155, 254, 0.05)); color: #6c5ce7;"><i class="fas fa-chart-line"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-average-revisions">0</span>
+                            <span class="kpi-label">Média de Revisões</span>
                         </div>
                     </div>
                 </div>

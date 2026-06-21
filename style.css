@@ -1523,10 +1523,10 @@ footer {
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    width: 7.5% !important;
-    height: 7.5% !important;
-    margin-left: -3.75% !important; /* Metade de 7.5% para centralização horizontal */
-    margin-top: -3.75% !important;  /* Metade de 7.5% para centralização vertical */
+    width: 5.8% !important;
+    height: 5.8% !important;
+    margin-left: -2.9% !important; /* Metade de 5.8% para centralização horizontal */
+    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique (-2.9% seria centralizado) */
     transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
     animation: none !important;      /* Desativa animação de entrada */
     box-shadow: 0 4px 10px rgba(16, 172, 132, 0.4) !important;
@@ -1632,9 +1632,9 @@ footer {
 
 /* Modal Customizado do Gestor */
 .manager-modal-content {
-    max-width: 1100px !important;
-    width: 95% !important;
-    max-height: 90vh !important;
+    max-width: 1400px !important;
+    width: 96% !important;
+    max-height: 92vh !important;
     overflow-y: auto !important;
     padding: 30px !important;
 }

@@ -5,6 +5,7 @@ let db = null; // Banco de dados do Firestore
 let currentVehicle = null;
 let isAdmin = true;
 let managerVehiclesList = []; // Cache local de veículos para o dashboard do gestor
+let currentFilteredVehiclesList = []; // Lista filtrada de veículos em exibição no dashboard
 
 // Configurações ativas
 let activeConfig = {
@@ -81,10 +82,12 @@ const elements = {
     kpiTotalRevisions: document.getElementById('kpi-total-revisions'),
     kpiTopConcessionaria: document.getElementById('kpi-top-concessionaria'),
     kpiTopConsultor: document.getElementById('kpi-top-consultor'),
+    kpiAverageRevisions: document.getElementById('kpi-average-revisions'),
     filterPlaca: document.getElementById('filter-placa'),
     filterChassi: document.getElementById('filter-chassi'),
     filterConcessionaria: document.getElementById('filter-concessionaria'),
     filterConsultor: document.getElementById('filter-consultor'),
+    btnExportExcel: document.getElementById('btn-export-excel'),
     
     // Toast de notificação
     toast: document.getElementById('toast'),
@@ -650,6 +653,12 @@ function setupEventListeners() {
         });
     }
 
+    if (elements.btnExportExcel) {
+        elements.btnExportExcel.addEventListener('click', () => {
+            exportManagerDataToExcel();
+        });
+    }
+
     // Filtros em tempo real
     const filterInputs = [elements.filterPlaca, elements.filterChassi, elements.filterConcessionaria, elements.filterConsultor];
     filterInputs.forEach(input => {
@@ -1030,6 +1039,7 @@ async function openManagerDashboard() {
         // Calcula Métricas de KPI
         const totalVehicles = managerVehiclesList.length;
         const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
+        const averageRevisions = totalVehicles > 0 ? (totalRevisions / totalVehicles) : 0;
 
         // Concessionária Líder
         const concCounts = {};
@@ -1078,6 +1088,10 @@ async function openManagerDashboard() {
             elements.kpiTopConsultor.textContent = topConsultor;
             elements.kpiTopConsultor.title = topConsultor;
         }
+        if (elements.kpiAverageRevisions) {
+            elements.kpiAverageRevisions.textContent = averageRevisions.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+            elements.kpiAverageRevisions.title = `Média exata: ${averageRevisions.toFixed(2)}`;
+        }
 
         // Renderiza a tabela
         renderManagerDashboardTable(managerVehiclesList);
@@ -1101,6 +1115,7 @@ async function openManagerDashboard() {
 function renderManagerDashboardTable(vehicles) {
     if (!elements.managerTableBody) return;
     elements.managerTableBody.innerHTML = '';
+    currentFilteredVehiclesList = vehicles;
 
     if (vehicles.length === 0) {
         if (elements.managerTableEmpty) elements.managerTableEmpty.style.display = 'flex';
@@ -1173,4 +1188,72 @@ function filterManagerDashboardTable() {
     });
 
     renderManagerDashboardTable(filtered);
+}
+
+function exportManagerDataToExcel() {
+    if (!currentFilteredVehiclesList || currentFilteredVehiclesList.length === 0) {
+        showToast("Não há dados disponíveis para exportar.", "error");
+        return;
+    }
+
+    // Cria os cabeçalhos
+    const headers = [
+        "Placa",
+        "Chassi",
+        "Concessionária Vendedora",
+        "Consultor",
+        "Revisões Realizadas",
+        "Data de Cadastro"
+    ];
+
+    // Mapeia os dados dos veículos para linhas CSV
+    const rows = currentFilteredVehiclesList.map(vehicle => {
+        const numMarcacoes = vehicle.marcacoes ? vehicle.marcacoes.length : 0;
+        
+        let dateStr = "-";
+        if (vehicle.created_at) {
+            const date = (vehicle.created_at.toDate) ? vehicle.created_at.toDate() : new Date(vehicle.created_at);
+            dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+        }
+
+        return [
+            vehicle.placa || "-",
+            vehicle.chassi || "-",
+            vehicle.concessionaria || "-",
+            vehicle.consultor || "-",
+            `${numMarcacoes} / 10`,
+            dateStr
+        ].map(val => `"${val.replace(/"/g, '""')}"`).join(";"); // Utiliza ponto e vírgula como separador para compatibilidade direta com Excel BR
+    });
+
+    // Concatena cabeçalho e linhas
+    const csvContent = "\ufeff" + [headers.join(";"), ...rows].join("\n"); // Adiciona o BOM do UTF-8 para exibir acentuação corretamente no Excel
+
+    // Cria o Blob e baixa o arquivo
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    
+    const hoje = new Date();
+    const dataFormatada = hoje.getFullYear() + 
+                         "-" + String(hoje.getMonth() + 1).padStart(2, '0') + 
+                         "-" + String(hoje.getDate()).padStart(2, '0') + 
+                         "_" + String(hoje.getHours()).padStart(2, '0') + 
+                         String(hoje.getMinutes()).padStart(2, '0');
+                         
+    const filename = `relatorio_fidelidade_gestor_${dataFormatada}.csv`;
+
+    if (navigator.msSaveBlob) { // IE 10+
+        navigator.msSaveBlob(blob, filename);
+    } else {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }
+
+    showToast("Dados exportados com sucesso!", "success");
 }
