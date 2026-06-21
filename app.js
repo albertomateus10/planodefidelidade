@@ -28,6 +28,7 @@ const elements = {
     regPlaca: document.getElementById('reg-placa'),
     regChassi: document.getElementById('reg-chassi'),
     regConcessionaria: document.getElementById('reg-concessionaria'),
+    regConsultor: document.getElementById('reg-consultor'),
     
     // Autocomplete
     searchSuggestions: document.getElementById('search-suggestions'),
@@ -37,6 +38,7 @@ const elements = {
     infoPlaca: document.getElementById('info-placa'),
     infoChassi: document.getElementById('info-chassi'),
     infoConcessionaria: document.getElementById('info-concessionaria'),
+    infoConsultor: document.getElementById('info-consultor'),
     infoData: document.getElementById('info-data'),
     
     // Modais
@@ -66,6 +68,7 @@ const elements = {
     voucherPlaca: document.getElementById('voucher-placa'),
     voucherChassi: document.getElementById('voucher-chassi'),
     voucherConcessionaria: document.getElementById('voucher-concessionaria'),
+    voucherConsultor: document.getElementById('voucher-consultor'),
     voucherData: document.getElementById('voucher-data'),
     
     // Dashboard do Gestor
@@ -77,9 +80,11 @@ const elements = {
     kpiTotalVehicles: document.getElementById('kpi-total-vehicles'),
     kpiTotalRevisions: document.getElementById('kpi-total-revisions'),
     kpiTopConcessionaria: document.getElementById('kpi-top-concessionaria'),
+    kpiTopConsultor: document.getElementById('kpi-top-consultor'),
     filterPlaca: document.getElementById('filter-placa'),
     filterChassi: document.getElementById('filter-chassi'),
     filterConcessionaria: document.getElementById('filter-concessionaria'),
+    filterConsultor: document.getElementById('filter-consultor'),
     
     // Toast de notificação
     toast: document.getElementById('toast'),
@@ -458,13 +463,14 @@ function setupEventListeners() {
         const placa = elements.regPlaca.value.trim().toUpperCase();
         const chassi = elements.regChassi.value.trim().toUpperCase();
         const concessionaria = elements.regConcessionaria.value.trim();
+        const consultor = elements.regConsultor.value.trim();
 
-        if (!placa || !chassi || !concessionaria) {
+        if (!placa || !chassi || !concessionaria || !consultor) {
             showToast("Preencha todos os campos do veículo.", "error");
             return;
         }
 
-        await registerVehicle(placa, chassi, concessionaria);
+        await registerVehicle(placa, chassi, concessionaria, consultor);
     });
 
 
@@ -581,6 +587,7 @@ function setupEventListeners() {
             // Preenche os dados no voucher
             elements.voucherPlaca.textContent = currentVehicle.placa;
             elements.voucherChassi.textContent = currentVehicle.chassi;
+            elements.voucherConsultor.textContent = currentVehicle.consultor || '-';
             
             const hoje = new Date();
             elements.voucherData.textContent = hoje.toLocaleDateString('pt-BR');
@@ -644,7 +651,7 @@ function setupEventListeners() {
     }
 
     // Filtros em tempo real
-    const filterInputs = [elements.filterPlaca, elements.filterChassi, elements.filterConcessionaria];
+    const filterInputs = [elements.filterPlaca, elements.filterChassi, elements.filterConcessionaria, elements.filterConsultor];
     filterInputs.forEach(input => {
         if (input) {
             input.addEventListener('input', () => {
@@ -705,7 +712,7 @@ async function searchVehicle(query) {
 }
 
 // Cadastra um novo veículo
-async function registerVehicle(placa, chassi, concessionaria) {
+async function registerVehicle(placa, chassi, concessionaria, consultor) {
     if (!db) {
         showToast("Banco de dados Firebase não inicializado.", "error");
         return;
@@ -733,6 +740,7 @@ async function registerVehicle(placa, chassi, concessionaria) {
             placa: placa,
             chassi: chassi,
             concessionaria: concessionaria,
+            consultor: consultor,
             marcacoes: [],
             created_at: firebase.firestore.FieldValue.serverTimestamp(),
             updated_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -919,6 +927,7 @@ function displayVehicleData(vehicle) {
     elements.infoPlaca.textContent = vehicle.placa;
     elements.infoChassi.textContent = vehicle.chassi;
     elements.infoConcessionaria.textContent = vehicle.concessionaria || '-';
+    elements.infoConsultor.textContent = vehicle.consultor || '-';
     
     // Converte timestamp do Firebase ou data normal
     let dateStr = "-";
@@ -993,6 +1002,7 @@ async function openManagerDashboard() {
     if (elements.filterPlaca) elements.filterPlaca.value = '';
     if (elements.filterChassi) elements.filterChassi.value = '';
     if (elements.filterConcessionaria) elements.filterConcessionaria.value = '';
+    if (elements.filterConsultor) elements.filterConsultor.value = '';
 
     // Abre o modal
     showModal(elements.managerModal);
@@ -1001,7 +1011,7 @@ async function openManagerDashboard() {
     if (elements.managerTableBody) {
         elements.managerTableBody.innerHTML = `
             <tr>
-                <td colspan="5" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                <td colspan="6" style="text-align: center; padding: 30px; color: var(--text-muted);">
                     <i class="fas fa-spinner fa-spin" style="font-size: 1.5rem; margin-bottom: 10px; display: block; color: var(--brand-green);"></i>
                     Carregando dados do servidor...
                 </td>
@@ -1039,12 +1049,34 @@ async function openManagerDashboard() {
             }
         }
 
+        // Consultor Líder
+        const consultorCounts = {};
+        managerVehiclesList.forEach(v => {
+            const consultor = (v.consultor || '').trim();
+            if (consultor && consultor !== 'Não informado') {
+                consultorCounts[consultor] = (consultorCounts[consultor] || 0) + 1;
+            }
+        });
+
+        let topConsultor = 'Nenhum';
+        let maxConsultorCount = 0;
+        for (const [consultor, count] of Object.entries(consultorCounts)) {
+            if (count > maxConsultorCount) {
+                maxConsultorCount = count;
+                topConsultor = consultor;
+            }
+        }
+
         // Atualiza elementos na tela
         if (elements.kpiTotalVehicles) elements.kpiTotalVehicles.textContent = totalVehicles;
         if (elements.kpiTotalRevisions) elements.kpiTotalRevisions.textContent = totalRevisions;
         if (elements.kpiTopConcessionaria) {
             elements.kpiTopConcessionaria.textContent = topConc;
             elements.kpiTopConcessionaria.title = topConc;
+        }
+        if (elements.kpiTopConsultor) {
+            elements.kpiTopConsultor.textContent = topConsultor;
+            elements.kpiTopConsultor.title = topConsultor;
         }
 
         // Renderiza a tabela
@@ -1056,7 +1088,7 @@ async function openManagerDashboard() {
         if (elements.managerTableBody) {
             elements.managerTableBody.innerHTML = `
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 20px; color: var(--brand-red);">
+                    <td colspan="6" style="text-align: center; padding: 20px; color: var(--brand-red);">
                         <i class="fas fa-exclamation-triangle" style="font-size: 1.5rem; margin-bottom: 10px; display: block;"></i>
                         Erro ao carregar os dados do Firebase.
                     </td>
@@ -1090,6 +1122,9 @@ function renderManagerDashboardTable(vehicles) {
         const concessionariaCell = document.createElement('td');
         concessionariaCell.textContent = vehicle.concessionaria || '-';
 
+        const consultorCell = document.createElement('td');
+        consultorCell.textContent = vehicle.consultor || '-';
+
         const revisoesCell = document.createElement('td');
         revisoesCell.style.textAlign = 'center';
         const numMarcacoes = vehicle.marcacoes ? vehicle.marcacoes.length : 0;
@@ -1115,6 +1150,7 @@ function renderManagerDashboardTable(vehicles) {
         tr.appendChild(placaCell);
         tr.appendChild(chassiCell);
         tr.appendChild(concessionariaCell);
+        tr.appendChild(consultorCell);
         tr.appendChild(revisoesCell);
         tr.appendChild(actionsCell);
 
@@ -1126,12 +1162,14 @@ function filterManagerDashboardTable() {
     const valPlaca = elements.filterPlaca ? elements.filterPlaca.value.trim().toUpperCase() : '';
     const valChassi = elements.filterChassi ? elements.filterChassi.value.trim().toUpperCase() : '';
     const valConc = elements.filterConcessionaria ? elements.filterConcessionaria.value.trim().toUpperCase() : '';
+    const valConsultor = elements.filterConsultor ? elements.filterConsultor.value.trim().toUpperCase() : '';
 
     const filtered = managerVehiclesList.filter(v => {
         const matchPlaca = !valPlaca || (v.placa && v.placa.toUpperCase().includes(valPlaca));
         const matchChassi = !valChassi || (v.chassi && v.chassi.toUpperCase().includes(valChassi));
         const matchConc = !valConc || (v.concessionaria && v.concessionaria.toUpperCase().includes(valConc));
-        return matchPlaca && matchChassi && matchConc;
+        const matchConsultor = !valConsultor || (v.consultor && v.consultor.toUpperCase().includes(valConsultor));
+        return matchPlaca && matchChassi && matchConc && matchConsultor;
     });
 
     renderManagerDashboardTable(filtered);

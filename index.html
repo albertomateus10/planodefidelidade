@@ -150,6 +150,10 @@
                             <span class="info-label">Concessionária:</span>
                             <span class="info-value" id="info-concessionaria">-</span>
                         </div>
+                        <div class="info-row">
+                            <span class="info-label">Consultor:</span>
+                            <span class="info-value" id="info-consultor">-</span>
+                        </div>
     
                         <div class="info-row">
                             <span class="info-label">Cadastrado em:</span>
@@ -176,6 +180,10 @@
                         <div class="form-group">
                             <label for="reg-concessionaria">Concessionária vendedora</label>
                             <input type="text" id="reg-concessionaria" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-consultor">Consultor</label>
+                            <input type="text" id="reg-consultor" class="form-input" required>
                         </div>
     
                         <button type="submit" class="btn-premium btn-secondary">
@@ -273,6 +281,7 @@
                             <div class="voucher-vehicle-grid">
                                 <div><strong>Placa:</strong> <span id="voucher-placa">-</span></div>
                                 <div><strong>Chassi:</strong> <span id="voucher-chassi">-</span></div>
+                                <div><strong>Consultor:</strong> <span id="voucher-consultor">-</span></div>
                                 <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
                             </div>
                         </div>
@@ -338,6 +347,13 @@
                             <span class="kpi-label">Concessionária Líder</span>
                         </div>
                     </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(241, 196, 15, 0.05)); color: #f1c40f;"><i class="fas fa-user-tie"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-value" id="kpi-top-consultor">-</span>
+                            <span class="kpi-label">Consultor Líder</span>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Barra de Filtros e Busca -->
@@ -363,6 +379,13 @@
                             <input type="text" id="filter-concessionaria" class="form-input filter-input" placeholder="Ex: San Marino" autocomplete="off">
                         </div>
                     </div>
+                    <div class="filter-group">
+                        <label for="filter-consultor">Filtrar por Consultor</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fas fa-user-tie"></i>
+                            <input type="text" id="filter-consultor" class="form-input filter-input" placeholder="Ex: João Silva" autocomplete="off">
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Tabela de Resultados -->
@@ -373,6 +396,7 @@
                                 <th>Placa</th>
                                 <th>Chassi</th>
                                 <th>Concessionária Vendedora</th>
+                                <th>Consultor</th>
                                 <th style="text-align: center;">Revisões Realizadas</th>
                                 <th style="text-align: center;">Ações</th>
                             </tr>
