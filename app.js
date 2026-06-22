@@ -82,7 +82,6 @@ const elements = {
     kpiTotalRevisions: document.getElementById('kpi-total-revisions'),
     kpiTopConcessionaria: document.getElementById('kpi-top-concessionaria'),
     kpiTopConsultor: document.getElementById('kpi-top-consultor'),
-    kpiAverageRevisions: document.getElementById('kpi-average-revisions'),
     filterPlaca: document.getElementById('filter-placa'),
     filterChassi: document.getElementById('filter-chassi'),
     filterConcessionaria: document.getElementById('filter-concessionaria'),
@@ -379,8 +378,10 @@ function setupAuthListener() {
             // Verificar se o usuário está liberado no banco de dados
             if (db) {
                 try {
+                    console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
                     const userDoc = await db.collection('usuarios').doc(user.uid).get();
                     if (!userDoc.exists) {
+                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
                         // Novo cadastro ou usuário sem registro no Firestore
                         await db.collection('usuarios').doc(user.uid).set({
                             uid: user.uid,
@@ -388,12 +389,14 @@ function setupAuthListener() {
                             aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
+                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
                         showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
                         await firebase.auth().signOut();
                         return;
                     }
                     
                     const userData = userDoc.data();
+                    console.log("Documento encontrado no Firestore. Status aprovado:", userData.aprovado);
                     if (!userData.aprovado) {
                         showToast("Sua conta está aguardando liberação do administrador.", "error");
                         await firebase.auth().signOut();
@@ -1075,7 +1078,6 @@ async function openManagerDashboard() {
         // Calcula Métricas de KPI
         const totalVehicles = managerVehiclesList.length;
         const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
-        const averageRevisions = totalVehicles > 0 ? (totalRevisions / totalVehicles) : 0;
 
         // Concessionária Líder
         const concCounts = {};
@@ -1123,10 +1125,6 @@ async function openManagerDashboard() {
         if (elements.kpiTopConsultor) {
             elements.kpiTopConsultor.textContent = topConsultor;
             elements.kpiTopConsultor.title = topConsultor;
-        }
-        if (elements.kpiAverageRevisions) {
-            elements.kpiAverageRevisions.textContent = averageRevisions.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 1 });
-            elements.kpiAverageRevisions.title = `Média exata: ${averageRevisions.toFixed(2)}`;
         }
 
         // Renderiza a tabela
