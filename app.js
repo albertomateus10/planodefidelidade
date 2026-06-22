@@ -368,13 +368,44 @@ function setupAuthListener() {
     if (authListenerUnsubscribe) {
         authListenerUnsubscribe();
     }
-    
-    authListenerUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
+    authListenerUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
         const landingScreen = document.getElementById('landing-screen');
         const mainApp = document.getElementById('main-app');
         
         if (user) {
             console.log("Usuário autenticado:", user.email);
+            
+            // Verificar se o usuário está liberado no banco de dados
+            if (db) {
+                try {
+                    const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                    if (!userDoc.exists) {
+                        // Novo cadastro ou usuário sem registro no Firestore
+                        await db.collection('usuarios').doc(user.uid).set({
+                            uid: user.uid,
+                            email: user.email,
+                            aprovado: false,
+                            created_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
+                        await firebase.auth().signOut();
+                        return;
+                    }
+                    
+                    const userData = userDoc.data();
+                    if (!userData.aprovado) {
+                        showToast("Sua conta está aguardando liberação do administrador.", "error");
+                        await firebase.auth().signOut();
+                        return;
+                    }
+                } catch (error) {
+                    console.error("Erro ao verificar liberação de usuário:", error);
+                    showToast("Erro de conexão ao validar sua conta.", "error");
+                    await firebase.auth().signOut();
+                    return;
+                }
+            }
+            
             document.getElementById('user-email-display').textContent = user.email;
             
             // Transição suave para o App
