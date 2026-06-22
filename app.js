@@ -154,8 +154,9 @@ function setupLandingScreen() {
                             window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1';
 
-        // Bypass/Simulação offline para ambiente local via file://
-        if (isLocalFile) {
+        // Bypass/Simulação offline para ambiente local apenas se o Firebase não estiver inicializado
+        const useLocalSimulation = !db && isLocalFile;
+        if (useLocalSimulation) {
             if (authMode === 'login') {
                 if (email.toLowerCase().endsWith('@sanmarinofiat.com.br') && password.length >= 6) {
                     showToast("Login local de teste realizado!", "success");
