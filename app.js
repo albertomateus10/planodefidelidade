@@ -648,13 +648,27 @@ function setupEventListeners() {
         elements.btnPrintVoucher.addEventListener('click', async () => {
             showToast("Gerando PDF em alta definição...", "success");
 
-            const element = document.getElementById('voucher-print-area');
+            const originalElement = document.getElementById('voucher-print-area');
+            
+            // Clona o elemento para evitar que dimensões do modal ou resolução de tela cortem o layout
+            const element = originalElement.cloneNode(true);
+            
+            // Define estilos inline para isolamento completo off-screen
+            element.style.position = 'absolute';
+            element.style.left = '-9999px';
+            element.style.top = '0';
+            element.style.width = '297mm';
+            element.style.height = '420mm';
+            element.style.background = '#ffffff';
+            element.style.display = 'block';
+            
+            document.body.appendChild(element);
 
-            // 1. Aplica classe que fixa as dimensões A4 Paisagem
+            // 1. Aplica classe que fixa as dimensões A4 Paisagem no clone
             element.classList.add('exporting-pdf');
 
-            // 2. Aguarda o browser recalcular o layout com as novas dimensões CSS
-            await new Promise(r => setTimeout(r, 150));
+            // 2. Aguarda o browser recalcular o layout com as novas dimensões CSS no clone
+            await new Promise(r => setTimeout(r, 250));
 
             const opt = {
                 margin:      0,
@@ -664,15 +678,17 @@ function setupEventListeners() {
                 jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
-            // 3. Gera e baixa o PDF
+            // 3. Gera e baixa o PDF a partir do clone isolado
             html2pdf().set(opt).from(element).save()
                 .then(() => {
-                    element.classList.remove('exporting-pdf');
+                    document.body.removeChild(element);
                     showToast("PDF baixado com sucesso!", "success");
                     setTimeout(() => hideModal(elements.voucherModal), 1000);
                 })
                 .catch(err => {
-                    element.classList.remove('exporting-pdf');
+                    if (document.body.contains(element)) {
+                        document.body.removeChild(element);
+                    }
                     console.error("Erro ao gerar PDF:", err);
                     showToast("Erro ao gerar o PDF do voucher.", "error");
                 });
