@@ -250,7 +250,6 @@ function setupLandingScreen() {
             try {
                 showToast("Criando conta...", "success");
                 await firebase.auth().createUserWithEmailAndPassword(email, password);
-                showToast("Conta criada com sucesso!", "success");
             } catch (error) {
                 console.error("Erro no cadastro:", error);
                 let msg = "Erro ao criar conta. Tente novamente.";
