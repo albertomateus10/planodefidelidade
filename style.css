@@ -300,6 +300,11 @@ main {
     transition: var(--transition-smooth);
 }
 
+.form-input::placeholder {
+    color: rgba(30, 39, 46, 0.4);
+    font-weight: 300;
+}
+
 .form-input:focus {
     background: #fff;
     border-color: var(--brand-green);
@@ -557,8 +562,8 @@ main {
 /* Check livre posicionado no clique */
 .check-mark-free {
     position: absolute;
-    width: 6.5%;
-    aspect-ratio: 1;
+    width: 4cqw;
+    height: 4cqw;
     background: var(--brand-green);
     border-radius: 50%;
     display: flex;
@@ -574,10 +579,13 @@ main {
 
 .check-mark-free i {
     color: white;
-    font-size: 1.6cqw;
+    font-size: 1.8cqw;
     font-weight: 900;
     line-height: 1;
     pointer-events: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .check-mark-free:hover {
