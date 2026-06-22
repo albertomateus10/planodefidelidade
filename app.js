@@ -158,7 +158,7 @@ function setupLandingScreen() {
         const useLocalSimulation = !db && isLocalFile;
         if (useLocalSimulation) {
             if (authMode === 'login') {
-                if (email.toLowerCase().endsWith('@sanmarinofiat.com.br') && password.length >= 6) {
+                if (email.includes('@') && password.length >= 6) {
                     showToast("Login local de teste realizado!", "success");
                     document.getElementById('user-email-display').textContent = email + " (Local)";
                     const landingScreen = document.getElementById('landing-screen');
@@ -170,13 +170,13 @@ function setupLandingScreen() {
                         document.body.style.overflow = '';
                     }, 600);
                 } else {
-                    showToast("Para testes locais, use um e-mail @sanmarinofiat.com.br e senha de no mínimo 6 caracteres.", "error");
+                    showToast("Para testes locais, use um e-mail válido e senha de no mínimo 6 caracteres.", "error");
                 }
             } else {
                 // Cadastro local simulado
                 const confirmPassword = confirmPasswordInput.value;
-                if (!email.toLowerCase().endsWith('@sanmarinofiat.com.br')) {
-                    showToast("Apenas e-mails do domínio @sanmarinofiat.com.br são permitidos para cadastro.", "error");
+                if (!email.includes('@')) {
+                    showToast("Insira um e-mail válido para o cadastro.", "error");
                     return;
                 }
                 if (password !== confirmPassword) {
@@ -230,9 +230,9 @@ function setupLandingScreen() {
             // Cadastro convencional
             const confirmPassword = confirmPasswordInput.value;
 
-            // Validação de e-mail da San Marino
-            if (!email.toLowerCase().endsWith('@sanmarinofiat.com.br')) {
-                showToast("Apenas e-mails do domínio @sanmarinofiat.com.br são permitidos para cadastro manual.", "error");
+            // Validação de e-mail
+            if (!email.includes('@')) {
+                showToast("Por favor, insira um e-mail válido.", "error");
                 return;
             }
 
@@ -382,18 +382,16 @@ function setupAuthListener() {
                     console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
                     const userDoc = await db.collection('usuarios').doc(user.uid).get();
                     if (!userDoc.exists) {
-                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
+                        console.log("Documento não existe. Criando novo usuário no Firestore...");
                         // Novo cadastro ou usuário sem registro no Firestore
                         await db.collection('usuarios').doc(user.uid).set({
                             uid: user.uid,
                             email: user.email,
-                            aprovado: false,
+                            aprovado: true,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
-                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
-                        await firebase.auth().signOut();
-                        return;
+                        console.log("Documento de usuário criado com sucesso no Firestore.");
+                        showToast("Cadastro realizado com sucesso!", "success");
                     }
                     
                     const userData = userDoc.data();
