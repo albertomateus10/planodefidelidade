@@ -149,6 +149,7 @@ function setupLandingScreen() {
         
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        console.log("Formulário submetido. Modo ativo:", authMode);
         const isLocalFile = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
                             window.location.hostname === '127.0.0.1';
