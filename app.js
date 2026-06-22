@@ -382,16 +382,18 @@ function setupAuthListener() {
                     console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
                     const userDoc = await db.collection('usuarios').doc(user.uid).get();
                     if (!userDoc.exists) {
-                        console.log("Documento não existe. Criando novo usuário no Firestore...");
+                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
                         // Novo cadastro ou usuário sem registro no Firestore
                         await db.collection('usuarios').doc(user.uid).set({
                             uid: user.uid,
                             email: user.email,
-                            aprovado: true,
+                            aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        console.log("Documento de usuário criado com sucesso no Firestore.");
-                        showToast("Cadastro realizado com sucesso!", "success");
+                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
+                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
+                        await firebase.auth().signOut();
+                        return;
                     }
                     
                     const userData = userDoc.data();
