@@ -400,7 +400,11 @@ function setupAuthListener() {
                     }
                 } catch (error) {
                     console.error("Erro ao verificar liberação de usuário:", error);
-                    showToast("Erro de conexão ao validar sua conta.", "error");
+                    if (error.code === 'permission-denied') {
+                        showToast("Erro de permissão no Firebase. Configure as Regras do Firestore para a coleção 'usuarios'.", "error");
+                    } else {
+                        showToast("Erro de conexão ao validar sua conta.", "error");
+                    }
                     await firebase.auth().signOut();
                     return;
                 }
