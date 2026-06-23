@@ -1295,7 +1295,6 @@ footer {
     justify-content: center;
     gap: 8px;
     transition: var(--transition-smooth);
-    margin-top: 5px;
 }
 
 .btn-voucher-float:hover {

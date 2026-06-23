@@ -457,7 +457,7 @@ function setupEventListeners() {
         clearTimeout(autocompleteTimer);
         autocompleteActiveIndex = -1;
 
-        if (query.length < 2) {
+        if (query.length < 1) {
             hideSuggestions();
             return;
         }
