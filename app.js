@@ -634,6 +634,9 @@ function setupEventListeners() {
             const hoje = new Date();
             elements.voucherData.textContent = hoje.toLocaleDateString('pt-BR');
             
+            // Renderiza as marcações (bolas de check) no tabuleiro do voucher
+            renderCheckmarks(currentVehicle.marcacoes || [], elements.voucherBoard);
+            
             showModal(elements.voucherModal);
         });
     }
