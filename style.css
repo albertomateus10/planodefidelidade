@@ -1450,8 +1450,8 @@ footer {
 
 /* Estilos aplicados APENAS durante a geração do PDF com html2pdf */
 .voucher-print-area.exporting-pdf {
-    width: 297mm !important;  /* Largura exata A4 paisagem */
-    height: 420mm !important; /* 2 páginas A4 paisagem = 2 × 210mm — força corte exato na metade */
+    width: 210mm !important;  /* Largura exata A4 retrato */
+    height: 297mm !important; /* Altura exata A4 retrato */
     overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -1459,44 +1459,24 @@ footer {
     display: block !important;
 }
 
-/* Cada página ocupa exatamente 1 folha A4 paisagem */
+/* Página única ocupa exatamente 1 folha A4 retrato */
 .voucher-print-area.exporting-pdf .voucher-pdf-page {
-    width: 297mm !important;
-    height: 210mm !important;
-    padding: 10mm !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    padding: 6mm !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: space-between !important;
+    justify-content: flex-start !important;
     align-items: center !important;
     overflow: hidden !important;
-    /* SEM page-break: o html2pdf corta automaticamente no canvas pela altura */
 }
 
 .voucher-print-area.exporting-pdf .voucher-vehicle-header {
     width: 100% !important;
-    padding-bottom: 10px !important;
-    margin-bottom: 10px !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 4px !important;
     box-sizing: border-box !important;
-}
-
-.voucher-print-area.exporting-pdf .voucher-recommendation-card {
-    flex: 1 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    width: 100% !important;
-    margin: 0 !important; /* Zera margens externas herdadas */
-    box-sizing: border-box !important;
-}
-
-.voucher-print-area.exporting-pdf .voucher-rec-img {
-    max-width: 100% !important;
-    max-height: 135mm !important; /* Limita a altura para caber junto com o cabeçalho */
-    width: auto !important;
-    height: auto !important;
-    object-fit: contain !important;
-    box-shadow: none !important;
 }
 
 .voucher-print-area.exporting-pdf .voucher-board-wrapper {
@@ -1506,18 +1486,18 @@ footer {
     align-items: center !important;
     width: 100% !important;
     height: 100% !important;
-    margin: 0 !important; /* Zera margens externas herdadas */
+    margin: 0 !important;
     padding: 0 !important;
     box-sizing: border-box !important;
 }
 
+/* A imagem vertical tem proporção portrait — cabe perfeitamente em A4 retrato */
 .voucher-print-area.exporting-pdf .voucher-fidelity-board {
-    width: 240mm !important;
-    max-width: 240mm !important;
-    /* Altura explícita: necessária para que top: Y% dos checks seja calculado
-       corretamente pelo browser ao chamar offsetHeight */
-    height: calc(240mm * 1748 / 2481) !important; /* ≈ 168.9mm */
-    aspect-ratio: 2481 / 1748 !important;
+    width: 190mm !important;
+    max-width: 190mm !important;
+    height: auto !important;
+    max-height: 255mm !important;
+    aspect-ratio: auto !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
@@ -1527,13 +1507,15 @@ footer {
 .voucher-print-area.exporting-pdf .voucher-fidelity-board .board-bg-img {
     width: 100% !important;
     height: auto !important;
+    max-height: 255mm !important;
+    object-fit: contain !important;
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
     width: 5.8% !important;
     height: 5.8% !important;
     margin-left: -2.9% !important; /* Metade de 5.8% para centralização horizontal */
-    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique (-2.9% seria centralizado) */
+    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique */
     transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
     animation: none !important;      /* Desativa animação de entrada */
     box-shadow: 0 4px 10px rgba(16, 172, 132, 0.4) !important;
@@ -1579,37 +1561,30 @@ footer {
         print-color-adjust: exact !important;
     }
     
-    /* Ajustes específicos para a orientação Paisagem no PDF / Impressão */
+    /* Ajustes específicos para orientação Retrato no PDF / Impressão */
     .voucher-vehicle-header {
-        padding-bottom: 8px !important;
-        margin-bottom: 12px !important;
-    }
-
-    .voucher-rec-img {
-        width: 220mm !important;
-        max-height: 155mm !important;
-        height: auto !important;
-        margin: 0 auto !important;
-        border-radius: 20px !important;
-        display: block !important;
+        padding-bottom: 4px !important;
+        margin-bottom: 6px !important;
     }
     
     .voucher-fidelity-board {
-        width: 220mm !important;
-        max-height: 155mm !important;
+        width: 170mm !important;
+        max-height: 240mm !important;
         margin: 0 auto !important;
-        aspect-ratio: 2481 / 1748 !important;
+        aspect-ratio: auto !important;
     }
     
     .voucher-fidelity-board .board-bg-img {
         width: 100% !important;
         height: auto !important;
-        border-radius: 20px !important;
+        max-height: 240mm !important;
+        object-fit: contain !important;
+        border-radius: 12px !important;
     }
     
     @page {
-        margin: 0.8cm;
-        size: landscape;
+        margin: 0.5cm;
+        size: portrait;
     }
 }
 

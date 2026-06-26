@@ -661,7 +661,7 @@ function setupEventListeners() {
                 filename:    `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
                 image:       { type: 'jpeg', quality: 1.0 },
                 html2canvas: { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false },
-                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' }
+                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
 
             // 3. Gera e baixa o PDF
