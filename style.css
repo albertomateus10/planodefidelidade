@@ -1403,6 +1403,8 @@ footer {
 .voucher-fidelity-board {
     margin: 0 auto;
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
+    aspect-ratio: 1748 / 2481;   /* Proporção exata da imagem verticalnota10.png */
+    container-type: inline-size; /* Habilita container queries para os checks */
 }
 
 /* Desativa cliques no tabuleiro do voucher */
@@ -1497,11 +1499,13 @@ footer {
     max-width: 190mm !important;
     height: auto !important;
     max-height: 255mm !important;
-    aspect-ratio: auto !important;
+    aspect-ratio: 1748 / 2481 !important;  /* Garante altura proporcional para que % das bolas funcione */
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
     position: relative !important;
+    container-type: inline-size !important;
+    overflow: visible !important;
 }
 
 .voucher-print-area.exporting-pdf .voucher-fidelity-board .board-bg-img {
@@ -1512,19 +1516,19 @@ footer {
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    width: 5.8% !important;
-    height: 5.8% !important;
-    margin-left: -2.9% !important; /* Metade de 5.8% para centralização horizontal */
-    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique */
-    transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
-    animation: none !important;      /* Desativa animação de entrada */
+    width: 5.5% !important;
+    height: 5.5% !important;
+    transform: translate(-50%, -50%) !important; /* Mantém centralização correta sobre o ponto clicado */
+    animation: none !important;                  /* Desativa animação de entrada */
     box-shadow: 0 4px 10px rgba(16, 172, 132, 0.4) !important;
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free i {
-    font-size: 4.2mm !important;    /* Força tamanho visível em mm independente de cqw */
+    font-size: 2.2cqw !important;   /* cqw relativo ao container (board), igual ao modo normal */
     line-height: 1 !important;
-    display: block !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
 }
 
 /* Configuração de Impressão */
