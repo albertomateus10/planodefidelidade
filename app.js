@@ -843,10 +843,10 @@ async function saveCheckmarks(marcacoes) {
 //   X: de ~4% a ~96%  da largura  (escala ~0.92, offset ~4%)
 //   Y: de ~39% a ~91% da altura   (escala ~0.52, offset ~39%)
 const VOUCHER_BOARD_MAP = {
-    xOffset: 4,    // % de início horizontal do tabuleiro na imagem vertical
-    xScale:  0.92, // fração da largura que o tabuleiro ocupa na imagem vertical
-    yOffset: 39,   // % de início vertical do tabuleiro na imagem vertical
-    yScale:  0.52  // fração da altura que o tabuleiro ocupa na imagem vertical
+    xOffset: 3,     // % de início horizontal do tabuleiro na imagem vertical
+    xScale:  0.93,  // fração da largura que o tabuleiro ocupa na imagem vertical
+    yOffset: 42,    // % de início vertical do tabuleiro na imagem vertical
+    yScale:  0.55   // fração da altura que o tabuleiro ocupa na imagem vertical
 };
 
 function renderCheckmarks(marcacoes, boardEl) {
