@@ -837,17 +837,41 @@ async function saveCheckmarks(marcacoes) {
 }
 
 // Renderiza os checks livres em um board
+// Mapeamento de coordenadas entre tabuleiro principal (nota10.png, paisagem)
+// e tabuleiro do voucher (verticalnota10.png, retrato).
+// Na imagem vertical, o tabuleiro (pista) ocupa uma sub-região:
+//   X: de ~4% a ~96%  da largura  (escala ~0.92, offset ~4%)
+//   Y: de ~39% a ~91% da altura   (escala ~0.52, offset ~39%)
+const VOUCHER_BOARD_MAP = {
+    xOffset: 4,    // % de início horizontal do tabuleiro na imagem vertical
+    xScale:  0.92, // fração da largura que o tabuleiro ocupa na imagem vertical
+    yOffset: 39,   // % de início vertical do tabuleiro na imagem vertical
+    yScale:  0.52  // fração da altura que o tabuleiro ocupa na imagem vertical
+};
+
 function renderCheckmarks(marcacoes, boardEl) {
     if (!boardEl) return;
     // Remove checks antigos
     boardEl.querySelectorAll('.check-mark-free').forEach(el => el.remove());
+
+    const isVoucherBoard = boardEl.id === 'voucher-fidelity-board';
+
     // Adiciona cada marcação
     (marcacoes || []).forEach((pos, idx) => {
+        let x = pos.x;
+        let y = pos.y;
+
+        // Converte coordenadas do tabuleiro paisagem para a imagem vertical do voucher
+        if (isVoucherBoard) {
+            x = VOUCHER_BOARD_MAP.xOffset + (pos.x * VOUCHER_BOARD_MAP.xScale / 100) * 100;
+            y = VOUCHER_BOARD_MAP.yOffset + (pos.y * VOUCHER_BOARD_MAP.yScale / 100) * 100;
+        }
+
         const el = document.createElement('div');
         el.className = 'check-mark-free';
         el.dataset.index = idx;
-        el.style.left = pos.x + '%';
-        el.style.top  = pos.y + '%';
+        el.style.left = x + '%';
+        el.style.top  = y + '%';
         el.innerHTML = '<i class="fas fa-check"></i>';
         boardEl.appendChild(el);
     });
