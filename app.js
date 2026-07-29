@@ -20,6 +20,20 @@ let activeConfig = {
     adminPin: "1234"
 };
 
+// Coordenadas perfeitas correspondentes a cada uma das 10 revisões na imagem de fundo (paisagem)
+const PERFECT_COORDINATES = [
+    { x: 35.0, y: 26.2 }, // 1ª Revisão
+    { x: 55.8, y: 26.2 }, // 2ª Revisão
+    { x: 76.6, y: 26.2 }, // 3ª Revisão
+    { x: 87.5, y: 43.5 }, // 4ª Revisão
+    { x: 66.2, y: 48.0 }, // 5ª Revisão
+    { x: 45.4, y: 48.0 }, // 6ª Revisão
+    { x: 23.5, y: 61.5 }, // 7ª Revisão
+    { x: 35.0, y: 68.2 }, // 8ª Revisão
+    { x: 55.8, y: 68.2 }, // 9ª Revisão
+    { x: 76.6, y: 68.2 }  // 10ª Revisão
+];
+
 // Elementos do DOM
 const elements = {
     // Formulários e painéis
@@ -596,10 +610,21 @@ function setupEventListeners() {
             }
 
             const rect = elements.mainBoard.getBoundingClientRect();
-            const x = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(2));
-            const y = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(2));
+            const clickX = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(2));
+            const clickY = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(2));
 
-            marcacoes.push({ x, y });
+            // Encontra a coordenada perfeita mais próxima do clique
+            let nearest = PERFECT_COORDINATES[0];
+            let minDist = Math.hypot(PERFECT_COORDINATES[0].x - clickX, PERFECT_COORDINATES[0].y - clickY);
+            for (let i = 1; i < PERFECT_COORDINATES.length; i++) {
+                const dist = Math.hypot(PERFECT_COORDINATES[i].x - clickX, PERFECT_COORDINATES[i].y - clickY);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = PERFECT_COORDINATES[i];
+                }
+            }
+
+            marcacoes.push({ x: nearest.x, y: nearest.y });
             await saveCheckmarks(marcacoes);
         });
     }
@@ -861,10 +886,25 @@ function renderCheckmarks(marcacoes, boardEl) {
         let x = pos.x;
         let y = pos.y;
 
+        // Faz snap para a coordenada perfeita mais próxima
+        let nearest = PERFECT_COORDINATES[0];
+        let minDist = Math.hypot(PERFECT_COORDINATES[0].x - x, PERFECT_COORDINATES[0].y - y);
+        for (let i = 1; i < PERFECT_COORDINATES.length; i++) {
+            const dist = Math.hypot(PERFECT_COORDINATES[i].x - x, PERFECT_COORDINATES[i].y - y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = PERFECT_COORDINATES[i];
+            }
+        }
+
+        // Utiliza a coordenada perfeita encontrada para desenhar
+        x = nearest.x;
+        y = nearest.y;
+
         // Converte coordenadas do tabuleiro paisagem para a imagem vertical do voucher
         if (isVoucherBoard) {
-            x = VOUCHER_BOARD_MAP.xOffset + (pos.x * VOUCHER_BOARD_MAP.xScale / 100) * 100;
-            y = VOUCHER_BOARD_MAP.yOffset + (pos.y * VOUCHER_BOARD_MAP.yScale / 100) * 100;
+            x = VOUCHER_BOARD_MAP.xOffset + (x * VOUCHER_BOARD_MAP.xScale / 100) * 100;
+            y = VOUCHER_BOARD_MAP.yOffset + (y * VOUCHER_BOARD_MAP.yScale / 100) * 100;
         }
 
         const el = document.createElement('div');
