@@ -40,6 +40,15 @@
                 </div>
 
                 <form id="landing-form" class="landing-form" novalidate>
+                    <div class="landing-input-group" id="name-input-group" style="display: none;">
+                        <input
+                            type="text"
+                            id="landing-name-input"
+                            class="landing-input"
+                            placeholder="Nome Completo"
+                            autocomplete="name"
+                        >
+                    </div>
                     <div class="landing-input-group">
                         <input
                             type="email"
@@ -98,9 +107,16 @@
             <section class="panel-side">
 
                 <!-- Botão de Acesso do Gestor -->
-                <button id="btn-manager-dashboard" class="btn-premium btn-manager-dashboard" style="margin-bottom: 5px; background: linear-gradient(135deg, #00b894, #00d2d3); box-shadow: 0 4px 12px rgba(0, 184, 148, 0.25);">
+                <button id="btn-manager-dashboard" class="btn-premium btn-manager-dashboard" style="margin-bottom: 6px; background: linear-gradient(135deg, #00b894, #00d2d3); box-shadow: 0 4px 12px rgba(0, 184, 148, 0.25);">
                     <i class="fas fa-chart-line"></i>
                     Painel de Dados
+                </button>
+
+                <!-- Botão Painel de Aprovação e Gestão de Usuários -->
+                <button id="btn-users-panel" class="btn-premium btn-users-dashboard" style="margin-bottom: 10px; background: linear-gradient(135deg, #0f172a, #1e293b); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); position: relative;">
+                    <i class="fas fa-user-shield" style="color: #ef4444;"></i>
+                    <span>Gestão de Usuários</span>
+                    <span id="badge-pending-indicator" class="users-pending-badge" style="display: none;">0</span>
                 </button>
 
                 <!-- Menu do Usuário Logado -->
@@ -416,6 +432,62 @@
                         <i class="fas fa-folder-open"></i>
                         <span>Nenhum veículo encontrado com os filtros aplicados.</span>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Painel de Aprovação e Gestão de Usuários -->
+        <div class="modal-overlay" id="users-management-modal">
+            <div class="modal-content users-modal-content">
+                <button class="modal-close" id="close-users-modal" title="Fechar">&times;</button>
+                
+                <!-- Cabeçalho do Modal -->
+                <div class="users-modal-header">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-shield-alt users-header-shield-icon"></i>
+                        <h3 class="users-modal-title">Painel de Aprovação e Gestão de Usuários</h3>
+                    </div>
+                </div>
+
+                <!-- Abas: Aguardando Aprovação vs Usuários Cadastrados -->
+                <div class="users-tabs-bar">
+                    <button class="users-tab-btn" id="tab-btn-pending">
+                        <i class="far fa-clock"></i>
+                        <span>Aguardando Aprovação</span>
+                        <span class="users-tab-count" id="count-pending-tab">0</span>
+                    </button>
+                    <button class="users-tab-btn active" id="tab-btn-registered">
+                        <i class="fas fa-user-friends"></i>
+                        <span>Usuários Cadastrados</span>
+                        <span class="users-tab-count" id="count-registered-tab">0</span>
+                    </button>
+                </div>
+
+                <!-- Conteúdo Aba: Aguardando Aprovação -->
+                <div class="users-tab-pane" id="pane-pending" style="display: none;">
+                    <div class="users-list-container" id="list-pending-users">
+                        <!-- Itens inseridos dinamicamente pelo JS -->
+                    </div>
+                    <div class="users-empty-state" id="empty-pending-users" style="display: none;">
+                        <i class="far fa-clock"></i>
+                        <p>Nenhum usuário aguardando aprovação no momento.</p>
+                    </div>
+                </div>
+
+                <!-- Conteúdo Aba: Usuários Cadastrados -->
+                <div class="users-tab-pane active" id="pane-registered">
+                    <div class="users-list-container" id="list-registered-users">
+                        <!-- Itens inseridos dinamicamente pelo JS -->
+                    </div>
+                    <div class="users-empty-state" id="empty-registered-users" style="display: none;">
+                        <i class="fas fa-users"></i>
+                        <p>Nenhum usuário cadastrado encontrado.</p>
+                    </div>
+                </div>
+
+                <!-- Rodapé do Modal com Botão Fechar -->
+                <div class="users-modal-footer">
+                    <button class="btn-users-close-footer" id="btn-close-users-footer">Fechar</button>
                 </div>
             </div>
         </div>

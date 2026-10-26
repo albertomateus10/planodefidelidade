@@ -91,7 +91,24 @@ const elements = {
     // Toast de notificação
     toast: document.getElementById('toast'),
     toastMsg: document.getElementById('toast-message'),
-    toastIcon: document.getElementById('toast-icon')
+    toastIcon: document.getElementById('toast-icon'),
+
+    // Painel de Aprovação e Gestão de Usuários
+    btnUsersPanel: document.getElementById('btn-users-panel'),
+    badgePendingIndicator: document.getElementById('badge-pending-indicator'),
+    usersModal: document.getElementById('users-management-modal'),
+    closeUsersModal: document.getElementById('close-users-modal'),
+    btnCloseUsersFooter: document.getElementById('btn-close-users-footer'),
+    tabBtnPending: document.getElementById('tab-btn-pending'),
+    tabBtnRegistered: document.getElementById('tab-btn-registered'),
+    countPendingTab: document.getElementById('count-pending-tab'),
+    countRegisteredTab: document.getElementById('count-registered-tab'),
+    panePending: document.getElementById('pane-pending'),
+    paneRegistered: document.getElementById('pane-registered'),
+    listPendingUsers: document.getElementById('list-pending-users'),
+    listRegisteredUsers: document.getElementById('list-registered-users'),
+    emptyPendingUsers: document.getElementById('empty-pending-users'),
+    emptyRegisteredUsers: document.getElementById('empty-registered-users')
 };
 
 // Inicialização ao carregar a página
@@ -105,6 +122,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // 0. Controle da Tela de Entrada (Landing Screen)
 function setupLandingScreen() {
     const landingForm = document.getElementById('landing-form');
+    const nameInput = document.getElementById('landing-name-input');
+    const nameInputGroup = document.getElementById('name-input-group');
     const emailInput = document.getElementById('landing-email-input');
     const passwordInput = document.getElementById('landing-password-input');
     const confirmPasswordInput = document.getElementById('landing-confirm-password-input');
@@ -122,6 +141,8 @@ function setupLandingScreen() {
         authMode = 'login';
         tabLogin.classList.add('active');
         tabRegister.classList.remove('active');
+        if (nameInputGroup) nameInputGroup.style.display = 'none';
+        if (nameInput) nameInput.required = false;
         confirmPasswordGroup.style.display = 'none';
         confirmPasswordInput.required = false;
         btnText.textContent = "Acessar";
@@ -135,6 +156,8 @@ function setupLandingScreen() {
         authMode = 'register';
         tabRegister.classList.add('active');
         tabLogin.classList.remove('active');
+        if (nameInputGroup) nameInputGroup.style.display = 'block';
+        if (nameInput) nameInput.required = true;
         confirmPasswordGroup.style.display = 'block';
         confirmPasswordInput.required = true;
         btnText.textContent = "Cadastrar";
@@ -149,6 +172,7 @@ function setupLandingScreen() {
         
         const email = emailInput.value.trim();
         const password = passwordInput.value;
+        const nome = nameInput ? nameInput.value.trim() : '';
         console.log("Formulário submetido. Modo ativo:", authMode);
         const isLocalFile = window.location.protocol === 'file:' || 
                             window.location.hostname === 'localhost' || 
@@ -159,8 +183,18 @@ function setupLandingScreen() {
         if (useLocalSimulation) {
             if (authMode === 'login') {
                 if (email.includes('@') && password.length >= 6) {
-                    showToast("Login local de teste realizado!", "success");
-                    document.getElementById('user-email-display').textContent = email + " (Local)";
+                    const simulated = getSimulatedUsers();
+                    const existing = simulated.find(u => u.email.toLowerCase() === email.toLowerCase());
+                    if (existing && existing.aprovado === false) {
+                        showToast("Sua conta está aguardando liberação do administrador.", "error");
+                        return;
+                    }
+
+                    showToast("Login local realizado com sucesso!", "success");
+                    const userDisplayName = existing ? (existing.nome || existing.email) : (email + " (Local)");
+                    document.getElementById('user-email-display').textContent = userDisplayName;
+                    setupPendingUsersBadgeListener();
+                    
                     const landingScreen = document.getElementById('landing-screen');
                     const mainApp = document.getElementById('main-app');
                     landingScreen.classList.add('hide');
@@ -187,16 +221,23 @@ function setupLandingScreen() {
                     showToast("A senha deve conter no mínimo 6 caracteres.", "error");
                     return;
                 }
-                showToast("Conta de teste criada localmente!", "success");
-                document.getElementById('user-email-display').textContent = email + " (Local)";
-                const landingScreen = document.getElementById('landing-screen');
-                const mainApp = document.getElementById('main-app');
-                landingScreen.classList.add('hide');
-                setTimeout(() => {
-                    landingScreen.style.display = 'none';
-                    mainApp.style.display = 'block';
-                    document.body.style.overflow = '';
-                }, 600);
+
+                // Cria usuário simulado aguardando aprovação
+                const simulated = getSimulatedUsers();
+                const newUser = {
+                    uid: 'user_' + Date.now(),
+                    nome: nome || email.split('@')[0],
+                    email: email,
+                    cargo: 'Funcionário',
+                    aprovado: false,
+                    fotoUrl: '',
+                    created_at: Date.now()
+                };
+                simulated.unshift(newUser);
+                saveSimulatedUsers(simulated);
+                
+                showToast("Cadastro realizado com sucesso! Aguardando aprovação do administrador.", "success");
+                tabLogin.click();
             }
             return;
         }
@@ -249,7 +290,33 @@ function setupLandingScreen() {
 
             try {
                 showToast("Criando conta...", "success");
-                await firebase.auth().createUserWithEmailAndPassword(email, password);
+                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
+                if (cred.user) {
+                    if (nome) {
+                        await cred.user.updateProfile({ displayName: nome }).catch(console.warn);
+                    }
+                    if (db) {
+                        const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
+                        const isFirst = allUsers.empty;
+                        await db.collection('usuarios').doc(cred.user.uid).set({
+                            uid: cred.user.uid,
+                            nome: nome || email.split('@')[0],
+                            email: email,
+                            cargo: isFirst ? 'Gestor' : 'Funcionário',
+                            role: isFirst ? 'gestor' : 'funcionario',
+                            aprovado: isFirst ? true : false,
+                            fotoUrl: '',
+                            created_at: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        if (isFirst) {
+                            showToast("Primeiro usuário cadastrado como Gestor!", "success");
+                            return; // Permite entrar
+                        }
+                    }
+                    showToast("Cadastro realizado! Aguardando aprovação do administrador.", "success");
+                    await firebase.auth().signOut();
+                    tabLogin.click();
+                }
             } catch (error) {
                 console.error("Erro no cadastro:", error);
                 let msg = "Erro ao criar conta. Tente novamente.";
@@ -284,7 +351,38 @@ function setupLandingScreen() {
         try {
             showToast("Conectando com o Google...", "success");
             const provider = new firebase.auth.GoogleAuthProvider();
-            await firebase.auth().signInWithPopup(provider);
+            const result = await firebase.auth().signInWithPopup(provider);
+            const user = result.user;
+            if (db && user) {
+                const docRef = db.collection('usuarios').doc(user.uid);
+                const docSnap = await docRef.get();
+                if (!docSnap.exists) {
+                    const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
+                    const isFirst = allUsers.empty;
+                    await docRef.set({
+                        uid: user.uid,
+                        nome: user.displayName || user.email.split('@')[0],
+                        email: user.email,
+                        cargo: isFirst ? 'Gestor' : 'Funcionário',
+                        role: isFirst ? 'gestor' : 'funcionario',
+                        aprovado: isFirst ? true : false,
+                        fotoUrl: user.photoURL || '',
+                        created_at: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    if (!isFirst) {
+                        showToast("Cadastro realizado com Google! Aguardando aprovação do administrador.", "success");
+                        await firebase.auth().signOut();
+                        return;
+                    }
+                } else {
+                    const userData = docSnap.data();
+                    if (!userData.aprovado) {
+                        showToast("Sua conta está aguardando liberação do administrador.", "error");
+                        await firebase.auth().signOut();
+                        return;
+                    }
+                }
+            }
             showToast("Login com Google realizado!", "success");
         } catch (error) {
             console.error("Erro ao autenticar com o Google:", error);
@@ -375,32 +473,47 @@ function setupAuthListener() {
         if (user) {
             console.log("Usuário autenticado:", user.email);
             
+            let currentUserData = null;
             // Verificar se o usuário está liberado no banco de dados
             if (db) {
                 try {
                     console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
-                    const userDoc = await db.collection('usuarios').doc(user.uid).get();
+                    const userDocRef = db.collection('usuarios').doc(user.uid);
+                    const userDoc = await userDocRef.get();
                     if (!userDoc.exists) {
-                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
-                        // Novo cadastro ou usuário sem registro no Firestore
-                        await db.collection('usuarios').doc(user.uid).set({
+                        console.log("Documento não existe. Verificando se é o primeiro usuário do sistema...");
+                        const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
+                        const isFirst = allUsers.empty;
+                        
+                        currentUserData = {
                             uid: user.uid,
+                            nome: user.displayName || user.email.split('@')[0],
                             email: user.email,
-                            aprovado: false,
+                            cargo: isFirst ? 'Gestor' : 'Funcionário',
+                            role: isFirst ? 'gestor' : 'funcionario',
+                            aprovado: isFirst ? true : false,
+                            fotoUrl: user.photoURL || '',
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
-                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
-                        await firebase.auth().signOut();
-                        return;
-                    }
-                    
-                    const userData = userDoc.data();
-                    console.log("Documento encontrado no Firestore. Status aprovado:", userData.aprovado);
-                    if (!userData.aprovado) {
-                        showToast("Sua conta está aguardando liberação do administrador.", "error");
-                        await firebase.auth().signOut();
-                        return;
+                        };
+
+                        await userDocRef.set(currentUserData);
+                        console.log("Documento de usuário criado no Firestore. Aprovado:", currentUserData.aprovado);
+                        
+                        if (!isFirst) {
+                            showToast("Cadastro realizado! Aguardando aprovação do administrador.", "success");
+                            await firebase.auth().signOut();
+                            return;
+                        } else {
+                            showToast("Bem-vindo! Conta configurada como Gestor principal.", "success");
+                        }
+                    } else {
+                        currentUserData = userDoc.data();
+                        console.log("Documento encontrado no Firestore. Status aprovado:", currentUserData.aprovado);
+                        if (!currentUserData.aprovado) {
+                            showToast("Sua conta está aguardando liberação do administrador.", "error");
+                            await firebase.auth().signOut();
+                            return;
+                        }
                     }
                 } catch (error) {
                     console.error("Erro ao verificar liberação de usuário:", error);
@@ -414,8 +527,12 @@ function setupAuthListener() {
                 }
             }
             
-            document.getElementById('user-email-display').textContent = user.email;
+            const displayTitle = currentUserData && currentUserData.nome ? currentUserData.nome : (user.displayName || user.email);
+            document.getElementById('user-email-display').textContent = displayTitle;
             
+            // Inicia monitoramento de contagem de usuários pendentes
+            setupPendingUsersBadgeListener();
+
             // Transição suave para o App
             landingScreen.classList.add('hide');
             setTimeout(() => {
@@ -719,6 +836,37 @@ function setupEventListeners() {
             });
         }
     });
+
+    // Event Listeners do Painel de Aprovação e Gestão de Usuários
+    if (elements.btnUsersPanel) {
+        elements.btnUsersPanel.addEventListener('click', () => {
+            openUsersManagementPanel();
+        });
+    }
+
+    if (elements.closeUsersModal) {
+        elements.closeUsersModal.addEventListener('click', () => {
+            hideModal(elements.usersModal);
+        });
+    }
+
+    if (elements.btnCloseUsersFooter) {
+        elements.btnCloseUsersFooter.addEventListener('click', () => {
+            hideModal(elements.usersModal);
+        });
+    }
+
+    if (elements.tabBtnPending) {
+        elements.tabBtnPending.addEventListener('click', () => {
+            switchUsersTab('pending');
+        });
+    }
+
+    if (elements.tabBtnRegistered) {
+        elements.tabBtnRegistered.addEventListener('click', () => {
+            switchUsersTab('registered');
+        });
+    }
 }
 
 // 4. Funções do Firestore
@@ -1357,3 +1505,482 @@ function exportManagerDataToExcel() {
 
     showToast("Dados exportados com sucesso!", "success");
 }
+
+// ============================================================
+// 5. PAINEL DE APROVAÇÃO E GESTÃO DE USUÁRIOS
+// ============================================================
+
+// Usuários simulados pré-carregados (compatíveis com o modelo do print)
+const DEFAULT_SIMULATED_USERS = [
+    {
+        uid: "user_cris",
+        nome: "Cristiane aguiar",
+        email: "cris.sanmarinofiat@gmail.com",
+        cargo: "Funcionário",
+        aprovado: true,
+        fotoUrl: "",
+        created_at: 1729697760000 // 23/10/2026, 14:36
+    },
+    {
+        uid: "user_vanessa",
+        nome: "Vanessa Prytula",
+        email: "vanessaprytula@gmail.com",
+        cargo: "Funcionário",
+        aprovado: true,
+        fotoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces",
+        created_at: 1729697520000 // 23/10/2026, 14:32
+    },
+    {
+        uid: "user_isabel",
+        nome: "Isabel Lopes",
+        email: "mbellopess@gmail.com",
+        cargo: "Funcionário",
+        aprovado: true,
+        fotoUrl: "",
+        created_at: 1729697280000 // 23/10/2026, 14:28
+    },
+    {
+        uid: "user_lucas",
+        nome: "lucas sanmarino",
+        email: "lucassanmarino3@gmail.com",
+        cargo: "Funcionário",
+        aprovado: true,
+        fotoUrl: "",
+        created_at: 1729697220000 // 23/10/2026, 14:27
+    },
+    {
+        uid: "user_leticia",
+        nome: "Leticia Angelina Moreira da Silva",
+        email: "msleticiaangelina@gmail.com",
+        cargo: "Funcionário",
+        aprovado: true,
+        fotoUrl: "",
+        created_at: 1729620720000 // 22/10/2026, 17:12
+    },
+    {
+        uid: "user_eduardo",
+        nome: "Eduardo Pinheiro",
+        email: "eduardopinheiro706@gmail.com",
+        cargo: "Gestor",
+        aprovado: true,
+        fotoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces",
+        created_at: 1729599060000 // 22/10/2026, 11:11
+    },
+    {
+        uid: "user_pedro_pendente",
+        nome: "Pedro Albuquerque",
+        email: "pedro.albuquerque@sanmarino.com.br",
+        cargo: "Funcionário",
+        aprovado: false,
+        fotoUrl: "",
+        created_at: Date.now() - 3600000 * 2 // 2 horas atrás
+    }
+];
+
+function getSimulatedUsers() {
+    try {
+        const stored = localStorage.getItem('sm_simulated_users_v2');
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {
+        console.warn("Erro ao ler usuários simulados:", e);
+    }
+    localStorage.setItem('sm_simulated_users_v2', JSON.stringify(DEFAULT_SIMULATED_USERS));
+    return [...DEFAULT_SIMULATED_USERS];
+}
+
+function saveSimulatedUsers(users) {
+    try {
+        localStorage.setItem('sm_simulated_users_v2', JSON.stringify(users));
+    } catch (e) {
+        console.warn("Erro ao salvar usuários simulados:", e);
+    }
+    updatePendingBadgeUI(users.filter(u => !u.aprovado).length);
+}
+
+// Cores harmônicas e elegantes para iniciais dos avatares
+function getAvatarColor(identifier) {
+    const palette = [
+        '#0891b2', // Ciano / Azul petróleo
+        '#334155', // Slate escuro
+        '#9333ea', // Roxo vibrante
+        '#c026d3', // Magenta
+        '#059669', // Verde esmeralda
+        '#2563eb', // Azul real
+        '#ea580c', // Laranja
+        '#dc2626'  // Vermelho
+    ];
+    let hash = 0;
+    const str = identifier || 'U';
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    return palette[Math.abs(hash) % palette.length];
+}
+
+// Formatação amigável de data: "23/10/2026, 14:36"
+function formatUserDate(timestamp) {
+    if (!timestamp) return 'Recente';
+    let date;
+    if (timestamp && typeof timestamp.toDate === 'function') {
+        date = timestamp.toDate();
+    } else if (timestamp instanceof Date) {
+        date = timestamp;
+    } else if (typeof timestamp === 'number' || typeof timestamp === 'string') {
+        date = new Date(timestamp);
+    } else {
+        date = new Date();
+    }
+
+    if (isNaN(date.getTime())) return 'Recente';
+
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+
+    return `${day}/${month}/${year}, ${hours}:${minutes}`;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Abre o painel modal de gestão de usuários
+async function openUsersManagementPanel() {
+    showModal(elements.usersModal);
+    await loadUsersList();
+}
+
+// Alterna entre abas 'pending' e 'registered'
+function switchUsersTab(tabName) {
+    if (tabName === 'pending') {
+        elements.tabBtnPending.classList.add('active');
+        elements.tabBtnRegistered.classList.remove('active');
+        elements.panePending.style.display = 'block';
+        elements.paneRegistered.style.display = 'none';
+    } else {
+        elements.tabBtnRegistered.classList.add('active');
+        elements.tabBtnPending.classList.remove('active');
+        elements.paneRegistered.style.display = 'block';
+        elements.panePending.style.display = 'none';
+    }
+}
+
+// Carrega os dados dos usuários do Firestore ou do armazenamento local simulado
+async function loadUsersList() {
+    // Exibe estado de carregamento
+    if (elements.listPendingUsers) {
+        elements.listPendingUsers.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: #64748b;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 8px;"></i>
+                <p style="font-size: 0.9rem;">Carregando usuários...</p>
+            </div>
+        `;
+    }
+    if (elements.listRegisteredUsers) {
+        elements.listRegisteredUsers.innerHTML = `
+            <div style="text-align: center; padding: 30px; color: #64748b;">
+                <i class="fas fa-spinner fa-spin" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 8px;"></i>
+                <p style="font-size: 0.9rem;">Carregando usuários...</p>
+            </div>
+        `;
+    }
+
+    let users = [];
+
+    if (db) {
+        try {
+            console.log("Consultando coleção 'usuarios' no Firestore...");
+            const snapshot = await db.collection('usuarios').get();
+            if (!snapshot.empty) {
+                users = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } else {
+                console.log("Nenhum usuário cadastrado no Firestore. Usando base local inicial.");
+                users = getSimulatedUsers();
+            }
+        } catch (error) {
+            console.error("Erro ao carregar usuários do Firestore:", error);
+            if (error.code === 'permission-denied') {
+                showToast("Erro de permissão no Firebase. Configure as regras de leitura para 'usuarios'.", "error");
+            } else {
+                showToast("Erro ao conectar ao Firebase. Exibindo dados locais.", "error");
+            }
+            users = getSimulatedUsers();
+        }
+    } else {
+        users = getSimulatedUsers();
+    }
+
+    // Ordena do mais recente para o mais antigo
+    users.sort((a, b) => {
+        const timeA = a.created_at ? (a.created_at.toDate ? a.created_at.toDate().getTime() : new Date(a.created_at).getTime()) : 0;
+        const timeB = b.created_at ? (b.created_at.toDate ? b.created_at.toDate().getTime() : new Date(b.created_at).getTime()) : 0;
+        return timeB - timeA;
+    });
+
+    renderUsersPanel(users);
+}
+
+// Renderiza os cards nas abas correspondentes
+function renderUsersPanel(users) {
+    const pending = users.filter(u => u.aprovado === false);
+    const registered = users.filter(u => u.aprovado === true);
+
+    // Atualiza contadores
+    if (elements.countPendingTab) elements.countPendingTab.textContent = pending.length;
+    if (elements.countRegisteredTab) elements.countRegisteredTab.textContent = registered.length;
+    updatePendingBadgeUI(pending.length);
+
+    // 1. Renderiza Usuários Pendentes (Aguardando Aprovação)
+    if (pending.length === 0) {
+        if (elements.emptyPendingUsers) elements.emptyPendingUsers.style.display = 'flex';
+        if (elements.listPendingUsers) elements.listPendingUsers.innerHTML = '';
+    } else {
+        if (elements.emptyPendingUsers) elements.emptyPendingUsers.style.display = 'none';
+        if (elements.listPendingUsers) {
+            elements.listPendingUsers.innerHTML = pending.map(user => {
+                const uid = user.uid || user.id;
+                const avatarHtml = user.fotoUrl
+                    ? `<div class="user-avatar-circle"><img src="${escapeHtml(user.fotoUrl)}" alt="${escapeHtml(user.nome || user.email)}"></div>`
+                    : `<div class="user-avatar-circle" style="background-color: ${getAvatarColor(user.nome || user.email)};">${(user.nome ? user.nome.charAt(0) : user.email.charAt(0)).toUpperCase()}</div>`;
+
+                const dateFormatted = formatUserDate(user.created_at);
+                const cargo = user.cargo || (user.role === 'gestor' ? 'Gestor' : 'Funcionário');
+
+                return `
+                    <div class="user-card-item" id="user-card-${uid}">
+                        <div class="user-card-left">
+                            ${avatarHtml}
+                            <div class="user-card-info">
+                                <span class="user-card-name">${escapeHtml(user.nome || user.email)}</span>
+                                <span class="user-card-email">${escapeHtml(user.email)}</span>
+                                <span class="user-card-date">Cadastrado em: ${dateFormatted}</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <select class="user-role-select" id="role-select-${uid}">
+                                <option value="Funcionário" ${cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
+                                <option value="Gestor" ${cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
+                            </select>
+                            <button class="btn-user-approve" onclick="handleUserApprove('${uid}')" title="Aprovar Usuário">
+                                <i class="fas fa-check"></i>
+                                <span>Aprovar</span>
+                            </button>
+                            <button class="btn-user-reject" onclick="handleUserReject('${uid}', '${escapeHtml(user.nome || user.email)}')" title="Recusar Cadastro">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // 2. Renderiza Usuários Cadastrados
+    if (registered.length === 0) {
+        if (elements.emptyRegisteredUsers) elements.emptyRegisteredUsers.style.display = 'flex';
+        if (elements.listRegisteredUsers) elements.listRegisteredUsers.innerHTML = '';
+    } else {
+        if (elements.emptyRegisteredUsers) elements.emptyRegisteredUsers.style.display = 'none';
+        if (elements.listRegisteredUsers) {
+            elements.listRegisteredUsers.innerHTML = registered.map(user => {
+                const uid = user.uid || user.id;
+                const avatarHtml = user.fotoUrl
+                    ? `<div class="user-avatar-circle"><img src="${escapeHtml(user.fotoUrl)}" alt="${escapeHtml(user.nome || user.email)}"></div>`
+                    : `<div class="user-avatar-circle" style="background-color: ${getAvatarColor(user.nome || user.email)};">${(user.nome ? user.nome.charAt(0) : user.email.charAt(0)).toUpperCase()}</div>`;
+
+                const dateFormatted = formatUserDate(user.created_at);
+                const cargo = user.cargo || (user.role === 'gestor' ? 'Gestor' : 'Funcionário');
+
+                return `
+                    <div class="user-card-item" id="user-card-${uid}">
+                        <div class="user-card-left">
+                            ${avatarHtml}
+                            <div class="user-card-info">
+                                <span class="user-card-name">${escapeHtml(user.nome || user.email)}</span>
+                                <span class="user-card-email">${escapeHtml(user.email)}</span>
+                                <span class="user-card-date">Cadastrado em: ${dateFormatted}</span>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <select class="user-role-select" onchange="handleUserRoleChange('${uid}', this.value)">
+                                <option value="Funcionário" ${cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
+                                <option value="Gestor" ${cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
+                            </select>
+                            <button class="btn-user-delete" onclick="handleUserDelete('${uid}', '${escapeHtml(user.nome || user.email)}')" title="Excluir Usuário">
+                                <i class="far fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+}
+
+// Ação de Aprovar Usuário
+async function handleUserApprove(uid) {
+    const roleSelect = document.getElementById(`role-select-${uid}`);
+    const selectedCargo = roleSelect ? roleSelect.value : 'Funcionário';
+
+    if (db) {
+        try {
+            await db.collection('usuarios').doc(uid).update({
+                aprovado: true,
+                cargo: selectedCargo,
+                role: selectedCargo.toLowerCase()
+            });
+            showToast(`Usuário aprovado como ${selectedCargo}!`, "success");
+        } catch (error) {
+            console.error("Erro ao aprovar usuário no Firestore:", error);
+            showToast("Erro ao aprovar usuário no banco de dados.", "error");
+            return;
+        }
+    } else {
+        const simulated = getSimulatedUsers();
+        const user = simulated.find(u => u.uid === uid || u.id === uid);
+        if (user) {
+            user.aprovado = true;
+            user.cargo = selectedCargo;
+            saveSimulatedUsers(simulated);
+            showToast(`Usuário ${user.nome || user.email} aprovado como ${selectedCargo}!`, "success");
+        }
+    }
+
+    await loadUsersList();
+}
+
+// Ação de Recusar Cadastro
+async function handleUserReject(uid, userName) {
+    if (!confirm(`Deseja realmente recusar o cadastro de ${userName}?`)) {
+        return;
+    }
+
+    if (db) {
+        try {
+            await db.collection('usuarios').doc(uid).delete();
+            showToast("Cadastro recusado e removido.", "success");
+        } catch (error) {
+            console.error("Erro ao recusar usuário no Firestore:", error);
+            showToast("Erro ao remover cadastro no Firebase.", "error");
+            return;
+        }
+    } else {
+        let simulated = getSimulatedUsers();
+        simulated = simulated.filter(u => u.uid !== uid && u.id !== uid);
+        saveSimulatedUsers(simulated);
+        showToast("Cadastro recusado com sucesso.", "success");
+    }
+
+    await loadUsersList();
+}
+
+// Ação de Alterar Perfil/Cargo (Gestor / Funcionário)
+async function handleUserRoleChange(uid, newRole) {
+    if (db) {
+        try {
+            await db.collection('usuarios').doc(uid).update({
+                cargo: newRole,
+                role: newRole.toLowerCase()
+            });
+            showToast(`Cargo atualizado para ${newRole}!`, "success");
+        } catch (error) {
+            console.error("Erro ao alterar cargo no Firestore:", error);
+            showToast("Erro ao atualizar perfil no Firebase.", "error");
+            return;
+        }
+    } else {
+        const simulated = getSimulatedUsers();
+        const user = simulated.find(u => u.uid === uid || u.id === uid);
+        if (user) {
+            user.cargo = newRole;
+            saveSimulatedUsers(simulated);
+            showToast(`Cargo de ${user.nome || user.email} atualizado para ${newRole}!`, "success");
+        }
+    }
+}
+
+// Ação de Excluir Usuário Cadastrado
+async function handleUserDelete(uid, userName) {
+    if (!confirm(`Tem certeza que deseja excluir o usuário ${userName} do sistema? Ele perderá o acesso.`)) {
+        return;
+    }
+
+    if (db) {
+        try {
+            await db.collection('usuarios').doc(uid).delete();
+            showToast("Usuário excluído com sucesso!", "success");
+        } catch (error) {
+            console.error("Erro ao excluir usuário no Firestore:", error);
+            showToast("Erro ao excluir usuário no Firebase.", "error");
+            return;
+        }
+    } else {
+        let simulated = getSimulatedUsers();
+        simulated = simulated.filter(u => u.uid !== uid && u.id !== uid);
+        saveSimulatedUsers(simulated);
+        showToast("Usuário excluído com sucesso!", "success");
+    }
+
+    await loadUsersList();
+}
+
+// Atualização visual do badge de usuários pendentes na barra lateral
+function updatePendingBadgeUI(count) {
+    if (elements.badgePendingIndicator) {
+        elements.badgePendingIndicator.textContent = count;
+        elements.badgePendingIndicator.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+}
+
+// Monitora em tempo real a existência de novos cadastros pendentes
+let pendingUsersUnsubscribe = null;
+function setupPendingUsersBadgeListener() {
+    if (pendingUsersUnsubscribe) {
+        pendingUsersUnsubscribe();
+        pendingUsersUnsubscribe = null;
+    }
+
+    if (db) {
+        try {
+            pendingUsersUnsubscribe = db.collection('usuarios')
+                .where('aprovado', '==', false)
+                .onSnapshot(snapshot => {
+                    const count = snapshot.size;
+                    updatePendingBadgeUI(count);
+                    if (elements.countPendingTab) {
+                        elements.countPendingTab.textContent = count;
+                    }
+                }, err => {
+                    console.log("Observação: listener em tempo real de usuários pendentes inativo:", err.message);
+                });
+        } catch (e) {
+            console.warn("Falha ao inicializar listener de pendentes:", e);
+        }
+    } else {
+        const simulated = getSimulatedUsers();
+        const pendingCount = simulated.filter(u => !u.aprovado).length;
+        updatePendingBadgeUI(pendingCount);
+    }
+}
+
+// Exporta funções para o escopo global (para cliques nos botões HTML gerados dinamicamente)
+window.handleUserApprove = handleUserApprove;
+window.handleUserReject = handleUserReject;
+window.handleUserRoleChange = handleUserRoleChange;
+window.handleUserDelete = handleUserDelete;
+window.openUsersManagementPanel = openUsersManagementPanel;
+window.switchUsersTab = switchUsersTab;
+
