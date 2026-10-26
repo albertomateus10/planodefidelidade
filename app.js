@@ -174,73 +174,6 @@ function setupLandingScreen() {
         const password = passwordInput.value;
         const nome = nameInput ? nameInput.value.trim() : '';
         console.log("Formulário submetido. Modo ativo:", authMode);
-        const isLocalFile = window.location.protocol === 'file:' || 
-                            window.location.hostname === 'localhost' || 
-                            window.location.hostname === '127.0.0.1';
-
-        // Bypass/Simulação offline para ambiente local apenas se o Firebase não estiver inicializado
-        const useLocalSimulation = !db && isLocalFile;
-        if (useLocalSimulation) {
-            if (authMode === 'login') {
-                if (email.includes('@') && password.length >= 6) {
-                    const simulated = getSimulatedUsers();
-                    const existing = simulated.find(u => u.email.toLowerCase() === email.toLowerCase());
-                    if (existing && existing.aprovado === false) {
-                        showToast("Sua conta está aguardando liberação do administrador.", "error");
-                        return;
-                    }
-
-                    showToast("Login local realizado com sucesso!", "success");
-                    const userDisplayName = existing ? (existing.nome || existing.email) : (email + " (Local)");
-                    document.getElementById('user-email-display').textContent = userDisplayName;
-                    setupPendingUsersBadgeListener();
-                    
-                    const landingScreen = document.getElementById('landing-screen');
-                    const mainApp = document.getElementById('main-app');
-                    landingScreen.classList.add('hide');
-                    setTimeout(() => {
-                        landingScreen.style.display = 'none';
-                        mainApp.style.display = 'block';
-                        document.body.style.overflow = '';
-                    }, 600);
-                } else {
-                    showToast("Para testes locais, use um e-mail válido e senha de no mínimo 6 caracteres.", "error");
-                }
-            } else {
-                // Cadastro local simulado
-                const confirmPassword = confirmPasswordInput.value;
-                if (!email.includes('@')) {
-                    showToast("Insira um e-mail válido para o cadastro.", "error");
-                    return;
-                }
-                if (password !== confirmPassword) {
-                    showToast("As senhas não coincidem.", "error");
-                    return;
-                }
-                if (password.length < 6) {
-                    showToast("A senha deve conter no mínimo 6 caracteres.", "error");
-                    return;
-                }
-
-                // Cria usuário simulado aguardando aprovação
-                const simulated = getSimulatedUsers();
-                const newUser = {
-                    uid: 'user_' + Date.now(),
-                    nome: nome || email.split('@')[0],
-                    email: email,
-                    cargo: 'Funcionário',
-                    aprovado: false,
-                    fotoUrl: '',
-                    created_at: Date.now()
-                };
-                simulated.unshift(newUser);
-                saveSimulatedUsers(simulated);
-                
-                showToast("Cadastro realizado com sucesso! Aguardando aprovação do administrador.", "success");
-                tabLogin.click();
-            }
-            return;
-        }
 
         if (!firebase.apps.length) {
             showToast("Firebase não está conectado ou inicializado corretamente.", "error");
@@ -248,7 +181,7 @@ function setupLandingScreen() {
         }
 
         if (authMode === 'login') {
-            // Login convencional
+            // Login convencional via Firebase Auth
             try {
                 showToast("Efetuando login...", "success");
                 await firebase.auth().signInWithEmailAndPassword(email, password);
@@ -268,7 +201,7 @@ function setupLandingScreen() {
                 showToast(msg, "error");
             }
         } else {
-            // Cadastro convencional
+            // Cadastro convencional via Firebase Auth e Firestore
             const confirmPassword = confirmPasswordInput.value;
 
             // Validação de e-mail
@@ -289,31 +222,23 @@ function setupLandingScreen() {
             }
 
             try {
-                showToast("Criando conta...", "success");
+                showToast("Criando conta no Firebase...", "success");
                 const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
                 if (cred.user) {
                     if (nome) {
                         await cred.user.updateProfile({ displayName: nome }).catch(console.warn);
                     }
                     if (db) {
-                        const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
-                        const isFirst = allUsers.empty;
                         await db.collection('usuarios').doc(cred.user.uid).set({
                             uid: cred.user.uid,
-                            nome: nome || email.split('@')[0],
+                            nome: nome || formatNameFromEmail(email),
                             email: email,
-                            cargo: isFirst ? 'Gestor' : 'Funcionário',
-                            role: isFirst ? 'gestor' : 'funcionario',
-                            aprovado: isFirst ? true : false,
-                            fotoUrl: '',
+                            cargo: 'Funcionário',
+                            aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
-                        if (isFirst) {
-                            showToast("Primeiro usuário cadastrado como Gestor!", "success");
-                            return; // Permite entrar
-                        }
                     }
-                    showToast("Cadastro realizado! Aguardando aprovação do administrador.", "success");
+                    showToast("Cadastro realizado com sucesso! Aguarde a aprovação do gestor.", "success");
                     await firebase.auth().signOut();
                     tabLogin.click();
                 }
@@ -338,11 +263,6 @@ function setupLandingScreen() {
 
     // Login com Google
     googleLoginBtn.addEventListener('click', async () => {
-        if (window.location.protocol === 'file:') {
-            showToast("O login com Google exige que a aplicação esteja rodando em um servidor local (ex: http://localhost:8000). Use e-mail de teste no formulário.", "error");
-            return;
-        }
-
         if (!firebase.apps.length) {
             showToast("Firebase não está conectado ou inicializado corretamente.", "error");
             return;
@@ -357,23 +277,18 @@ function setupLandingScreen() {
                 const docRef = db.collection('usuarios').doc(user.uid);
                 const docSnap = await docRef.get();
                 if (!docSnap.exists) {
-                    const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
-                    const isFirst = allUsers.empty;
                     await docRef.set({
                         uid: user.uid,
-                        nome: user.displayName || user.email.split('@')[0],
+                        nome: user.displayName || formatNameFromEmail(user.email),
                         email: user.email,
-                        cargo: isFirst ? 'Gestor' : 'Funcionário',
-                        role: isFirst ? 'gestor' : 'funcionario',
-                        aprovado: isFirst ? true : false,
+                        cargo: 'Funcionário',
+                        aprovado: false,
                         fotoUrl: user.photoURL || '',
                         created_at: firebase.firestore.FieldValue.serverTimestamp()
                     });
-                    if (!isFirst) {
-                        showToast("Cadastro realizado com Google! Aguardando aprovação do administrador.", "success");
-                        await firebase.auth().signOut();
-                        return;
-                    }
+                    showToast("Cadastro realizado com Google! Aguardando aprovação do gestor.", "success");
+                    await firebase.auth().signOut();
+                    return;
                 } else {
                     const userData = docSnap.data();
                     if (!userData.aprovado) {
@@ -473,47 +388,32 @@ function setupAuthListener() {
         if (user) {
             console.log("Usuário autenticado:", user.email);
             
-            let currentUserData = null;
             // Verificar se o usuário está liberado no banco de dados
             if (db) {
                 try {
                     console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
-                    const userDocRef = db.collection('usuarios').doc(user.uid);
-                    const userDoc = await userDocRef.get();
+                    const userDoc = await db.collection('usuarios').doc(user.uid).get();
                     if (!userDoc.exists) {
-                        console.log("Documento não existe. Verificando se é o primeiro usuário do sistema...");
-                        const allUsers = await db.collection('usuarios').limit(1).get().catch(() => ({ empty: false }));
-                        const isFirst = allUsers.empty;
-                        
-                        currentUserData = {
+                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
+                        // Novo cadastro ou usuário sem registro no Firestore
+                        await db.collection('usuarios').doc(user.uid).set({
                             uid: user.uid,
-                            nome: user.displayName || user.email.split('@')[0],
                             email: user.email,
-                            cargo: isFirst ? 'Gestor' : 'Funcionário',
-                            role: isFirst ? 'gestor' : 'funcionario',
-                            aprovado: isFirst ? true : false,
-                            fotoUrl: user.photoURL || '',
+                            aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
-                        };
-
-                        await userDocRef.set(currentUserData);
-                        console.log("Documento de usuário criado no Firestore. Aprovado:", currentUserData.aprovado);
-                        
-                        if (!isFirst) {
-                            showToast("Cadastro realizado! Aguardando aprovação do administrador.", "success");
-                            await firebase.auth().signOut();
-                            return;
-                        } else {
-                            showToast("Bem-vindo! Conta configurada como Gestor principal.", "success");
-                        }
-                    } else {
-                        currentUserData = userDoc.data();
-                        console.log("Documento encontrado no Firestore. Status aprovado:", currentUserData.aprovado);
-                        if (!currentUserData.aprovado) {
-                            showToast("Sua conta está aguardando liberação do administrador.", "error");
-                            await firebase.auth().signOut();
-                            return;
-                        }
+                        });
+                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
+                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
+                        await firebase.auth().signOut();
+                        return;
+                    }
+                    
+                    const userData = userDoc.data();
+                    console.log("Documento encontrado no Firestore. Status aprovado:", userData.aprovado);
+                    if (!userData.aprovado) {
+                        showToast("Sua conta está aguardando liberação do administrador.", "error");
+                        await firebase.auth().signOut();
+                        return;
                     }
                 } catch (error) {
                     console.error("Erro ao verificar liberação de usuário:", error);
@@ -527,10 +427,9 @@ function setupAuthListener() {
                 }
             }
             
-            const displayTitle = currentUserData && currentUserData.nome ? currentUserData.nome : (user.displayName || user.email);
-            document.getElementById('user-email-display').textContent = displayTitle;
+            document.getElementById('user-email-display').textContent = user.email;
             
-            // Inicia monitoramento de contagem de usuários pendentes
+            // Iniciar listener de novos usuários pendentes em tempo real
             setupPendingUsersBadgeListener();
 
             // Transição suave para o App
@@ -544,6 +443,14 @@ function setupAuthListener() {
             console.log("Usuário não autenticado");
             document.getElementById('user-email-display').textContent = "-";
             
+            if (pendingUsersUnsubscribe) {
+                pendingUsersUnsubscribe();
+                pendingUsersUnsubscribe = null;
+            }
+            if (elements.badgePendingIndicator) {
+                elements.badgePendingIndicator.style.display = 'none';
+            }
+
             // Exibir a tela de login
             mainApp.style.display = 'none';
             landingScreen.style.display = 'flex';
@@ -1507,141 +1414,64 @@ function exportManagerDataToExcel() {
 }
 
 // ============================================================
-// 5. PAINEL DE APROVAÇÃO E GESTÃO DE USUÁRIOS
+// 12. PAINEL DE APROVAÇÃO E GESTÃO DE USUÁRIOS (FIRESTORE REAL)
 // ============================================================
 
-// Usuários simulados pré-carregados (compatíveis com o modelo do print)
-const DEFAULT_SIMULATED_USERS = [
-    {
-        uid: "user_cris",
-        nome: "Cristiane aguiar",
-        email: "cris.sanmarinofiat@gmail.com",
-        cargo: "Funcionário",
-        aprovado: true,
-        fotoUrl: "",
-        created_at: 1729697760000 // 23/10/2026, 14:36
-    },
-    {
-        uid: "user_vanessa",
-        nome: "Vanessa Prytula",
-        email: "vanessaprytula@gmail.com",
-        cargo: "Funcionário",
-        aprovado: true,
-        fotoUrl: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=faces",
-        created_at: 1729697520000 // 23/10/2026, 14:32
-    },
-    {
-        uid: "user_isabel",
-        nome: "Isabel Lopes",
-        email: "mbellopess@gmail.com",
-        cargo: "Funcionário",
-        aprovado: true,
-        fotoUrl: "",
-        created_at: 1729697280000 // 23/10/2026, 14:28
-    },
-    {
-        uid: "user_lucas",
-        nome: "lucas sanmarino",
-        email: "lucassanmarino3@gmail.com",
-        cargo: "Funcionário",
-        aprovado: true,
-        fotoUrl: "",
-        created_at: 1729697220000 // 23/10/2026, 14:27
-    },
-    {
-        uid: "user_leticia",
-        nome: "Leticia Angelina Moreira da Silva",
-        email: "msleticiaangelina@gmail.com",
-        cargo: "Funcionário",
-        aprovado: true,
-        fotoUrl: "",
-        created_at: 1729620720000 // 22/10/2026, 17:12
-    },
-    {
-        uid: "user_eduardo",
-        nome: "Eduardo Pinheiro",
-        email: "eduardopinheiro706@gmail.com",
-        cargo: "Gestor",
-        aprovado: true,
-        fotoUrl: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=faces",
-        created_at: 1729599060000 // 22/10/2026, 11:11
-    },
-    {
-        uid: "user_pedro_pendente",
-        nome: "Pedro Albuquerque",
-        email: "pedro.albuquerque@sanmarino.com.br",
-        cargo: "Funcionário",
-        aprovado: false,
-        fotoUrl: "",
-        created_at: Date.now() - 3600000 * 2 // 2 horas atrás
-    }
+let pendingUsersUnsubscribe = null;
+let currentLoadedUsers = [];
+
+// Paleta de gradientes vibrantes para os avatares dos usuários
+const AVATAR_PALETTES = [
+    'linear-gradient(135deg, #3b82f6, #1d4ed8)', // Azul
+    'linear-gradient(135deg, #10b981, #047857)', // Esmeralda
+    'linear-gradient(135deg, #8b5cf6, #6d28d9)', // Violeta
+    'linear-gradient(135deg, #f59e0b, #d97706)', // Âmbar
+    'linear-gradient(135deg, #ec4899, #be185d)', // Rosa
+    'linear-gradient(135deg, #06b6d4, #0e7490)', // Ciano
+    'linear-gradient(135deg, #ef4444, #b91c1c)'  // Vermelho
 ];
 
-function getSimulatedUsers() {
-    try {
-        const stored = localStorage.getItem('sm_simulated_users_v2');
-        if (stored) {
-            return JSON.parse(stored);
-        }
-    } catch (e) {
-        console.warn("Erro ao ler usuários simulados:", e);
-    }
-    localStorage.setItem('sm_simulated_users_v2', JSON.stringify(DEFAULT_SIMULATED_USERS));
-    return [...DEFAULT_SIMULATED_USERS];
-}
-
-function saveSimulatedUsers(users) {
-    try {
-        localStorage.setItem('sm_simulated_users_v2', JSON.stringify(users));
-    } catch (e) {
-        console.warn("Erro ao salvar usuários simulados:", e);
-    }
-    updatePendingBadgeUI(users.filter(u => !u.aprovado).length);
-}
-
-// Cores harmônicas e elegantes para iniciais dos avatares
 function getAvatarColor(identifier) {
-    const palette = [
-        '#0891b2', // Ciano / Azul petróleo
-        '#334155', // Slate escuro
-        '#9333ea', // Roxo vibrante
-        '#c026d3', // Magenta
-        '#059669', // Verde esmeralda
-        '#2563eb', // Azul real
-        '#ea580c', // Laranja
-        '#dc2626'  // Vermelho
-    ];
+    if (!identifier) return AVATAR_PALETTES[0];
     let hash = 0;
-    const str = identifier || 'U';
-    for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    for (let i = 0; i < identifier.length; i++) {
+        hash = identifier.charCodeAt(i) + ((hash << 5) - hash);
     }
-    return palette[Math.abs(hash) % palette.length];
+    const index = Math.abs(hash) % AVATAR_PALETTES.length;
+    return AVATAR_PALETTES[index];
 }
 
-// Formatação amigável de data: "23/10/2026, 14:36"
+function getUserInitials(name) {
+    if (!name) return 'U';
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
+function formatNameFromEmail(email) {
+    if (!email) return 'Usuário';
+    const prefix = email.split('@')[0];
+    const cleaned = prefix.replace(/[._]/g, ' ');
+    return cleaned.split(' ')
+        .filter(Boolean)
+        .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+}
+
 function formatUserDate(timestamp) {
-    if (!timestamp) return 'Recente';
+    if (!timestamp) return 'Data não informada';
     let date;
     if (timestamp && typeof timestamp.toDate === 'function') {
         date = timestamp.toDate();
     } else if (timestamp instanceof Date) {
         date = timestamp;
-    } else if (typeof timestamp === 'number' || typeof timestamp === 'string') {
-        date = new Date(timestamp);
     } else {
-        date = new Date();
+        date = new Date(timestamp);
     }
-
-    if (isNaN(date.getTime())) return 'Recente';
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    const hours = String(date.getHours()).padStart(2, '0');
-    const minutes = String(date.getMinutes()).padStart(2, '0');
-
-    return `${day}/${month}/${year}, ${hours}:${minutes}`;
+    if (isNaN(date.getTime())) return 'Data não informada';
+    return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function escapeHtml(str) {
@@ -1654,329 +1484,325 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// Abre o painel modal de gestão de usuários
+// Listener em tempo real para contagem de solicitações pendentes e atualização do badge
+function setupPendingUsersBadgeListener() {
+    if (!db) return;
+    if (pendingUsersUnsubscribe) {
+        pendingUsersUnsubscribe();
+    }
+
+    try {
+        pendingUsersUnsubscribe = db.collection('usuarios').onSnapshot(snapshot => {
+            let pendingCount = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if (data && !data.aprovado) {
+                    pendingCount++;
+                }
+            });
+
+            if (elements.badgePendingIndicator) {
+                elements.badgePendingIndicator.textContent = pendingCount;
+                elements.badgePendingIndicator.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+            }
+            if (elements.countPendingTab) {
+                elements.countPendingTab.textContent = pendingCount;
+            }
+        }, error => {
+            console.warn("Aviso ao escutar novos cadastros pendentes:", error);
+        });
+    } catch (e) {
+        console.warn("Erro ao configurar listener do badge:", e);
+    }
+}
+
+// Abrir Modal de Gestão de Usuários
 async function openUsersManagementPanel() {
     showModal(elements.usersModal);
     await loadUsersList();
+    
+    // Se houver pendências, abre direto na aba de aprovação; caso contrário, na aba de cadastrados
+    const pendingCount = parseInt(elements.countPendingTab ? elements.countPendingTab.textContent : '0') || 0;
+    if (pendingCount > 0) {
+        switchUsersTab('pending');
+    } else {
+        switchUsersTab('registered');
+    }
 }
 
-// Alterna entre abas 'pending' e 'registered'
+// Alternar Abas no Modal
 function switchUsersTab(tabName) {
     if (tabName === 'pending') {
-        elements.tabBtnPending.classList.add('active');
-        elements.tabBtnRegistered.classList.remove('active');
-        elements.panePending.style.display = 'block';
-        elements.paneRegistered.style.display = 'none';
-    } else {
-        elements.tabBtnRegistered.classList.add('active');
-        elements.tabBtnPending.classList.remove('active');
-        elements.paneRegistered.style.display = 'block';
-        elements.panePending.style.display = 'none';
-    }
-}
-
-// Carrega os dados dos usuários do Firestore ou do armazenamento local simulado
-async function loadUsersList() {
-    // Exibe estado de carregamento
-    if (elements.listPendingUsers) {
-        elements.listPendingUsers.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #64748b;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 8px;"></i>
-                <p style="font-size: 0.9rem;">Carregando usuários...</p>
-            </div>
-        `;
-    }
-    if (elements.listRegisteredUsers) {
-        elements.listRegisteredUsers.innerHTML = `
-            <div style="text-align: center; padding: 30px; color: #64748b;">
-                <i class="fas fa-spinner fa-spin" style="font-size: 1.4rem; color: #0f172a; margin-bottom: 8px;"></i>
-                <p style="font-size: 0.9rem;">Carregando usuários...</p>
-            </div>
-        `;
-    }
-
-    let users = [];
-
-    if (db) {
-        try {
-            console.log("Consultando coleção 'usuarios' no Firestore...");
-            const snapshot = await db.collection('usuarios').get();
-            if (!snapshot.empty) {
-                users = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            } else {
-                console.log("Nenhum usuário cadastrado no Firestore. Usando base local inicial.");
-                users = getSimulatedUsers();
-            }
-        } catch (error) {
-            console.error("Erro ao carregar usuários do Firestore:", error);
-            if (error.code === 'permission-denied') {
-                showToast("Erro de permissão no Firebase. Configure as regras de leitura para 'usuarios'.", "error");
-            } else {
-                showToast("Erro ao conectar ao Firebase. Exibindo dados locais.", "error");
-            }
-            users = getSimulatedUsers();
+        if (elements.tabBtnPending) elements.tabBtnPending.classList.add('active');
+        if (elements.tabBtnRegistered) elements.tabBtnRegistered.classList.remove('active');
+        if (elements.panePending) {
+            elements.panePending.style.display = 'block';
+            elements.panePending.classList.add('active');
+        }
+        if (elements.paneRegistered) {
+            elements.paneRegistered.style.display = 'none';
+            elements.paneRegistered.classList.remove('active');
         }
     } else {
-        users = getSimulatedUsers();
+        if (elements.tabBtnRegistered) elements.tabBtnRegistered.classList.add('active');
+        if (elements.tabBtnPending) elements.tabBtnPending.classList.remove('active');
+        if (elements.paneRegistered) {
+            elements.paneRegistered.style.display = 'block';
+            elements.paneRegistered.classList.add('active');
+        }
+        if (elements.panePending) {
+            elements.panePending.style.display = 'none';
+            elements.panePending.classList.remove('active');
+        }
     }
-
-    // Ordena do mais recente para o mais antigo
-    users.sort((a, b) => {
-        const timeA = a.created_at ? (a.created_at.toDate ? a.created_at.toDate().getTime() : new Date(a.created_at).getTime()) : 0;
-        const timeB = b.created_at ? (b.created_at.toDate ? b.created_at.toDate().getTime() : new Date(b.created_at).getTime()) : 0;
-        return timeB - timeA;
-    });
-
-    renderUsersPanel(users);
 }
 
-// Renderiza os cards nas abas correspondentes
-function renderUsersPanel(users) {
-    const pending = users.filter(u => u.aprovado === false);
-    const registered = users.filter(u => u.aprovado === true);
+// Carregar lista de usuários diretamente da coleção 'usuarios' do Firestore
+async function loadUsersList() {
+    if (!db) {
+        showToast("Firebase não está conectado.", "error");
+        return;
+    }
 
-    // Atualiza contadores
+    try {
+        const snapshot = await db.collection('usuarios').get();
+        const users = [];
+
+        snapshot.forEach(doc => {
+            const data = doc.data() || {};
+            users.push({
+                id: doc.id,
+                uid: data.uid || doc.id,
+                email: data.email || '',
+                nome: data.nome || formatNameFromEmail(data.email),
+                cargo: data.cargo || 'Funcionário',
+                aprovado: data.aprovado === true,
+                fotoUrl: data.fotoUrl || '',
+                created_at: data.created_at || null
+            });
+        });
+
+        // Ordenar os usuários por data de solicitação / cadastro (mais recentes primeiro)
+        users.sort((a, b) => {
+            const timeA = a.created_at ? (a.created_at.toMillis ? a.created_at.toMillis() : new Date(a.created_at).getTime()) : 0;
+            const timeB = b.created_at ? (b.created_at.toMillis ? b.created_at.toMillis() : new Date(b.created_at).getTime()) : 0;
+            return timeB - timeA;
+        });
+
+        currentLoadedUsers = users;
+        renderUsersPanel(users);
+    } catch (error) {
+        console.error("Erro ao carregar lista de usuários:", error);
+        showToast("Erro ao carregar usuários do Firebase: " + (error.message || error), "error");
+    }
+}
+
+// Renderizar os cards nas abas correspondentes
+function renderUsersPanel(users) {
+    const pending = users.filter(u => !u.aprovado);
+    const registered = users.filter(u => u.aprovado);
+
     if (elements.countPendingTab) elements.countPendingTab.textContent = pending.length;
     if (elements.countRegisteredTab) elements.countRegisteredTab.textContent = registered.length;
-    updatePendingBadgeUI(pending.length);
-
-    // 1. Renderiza Usuários Pendentes (Aguardando Aprovação)
-    if (pending.length === 0) {
-        if (elements.emptyPendingUsers) elements.emptyPendingUsers.style.display = 'flex';
-        if (elements.listPendingUsers) elements.listPendingUsers.innerHTML = '';
-    } else {
-        if (elements.emptyPendingUsers) elements.emptyPendingUsers.style.display = 'none';
-        if (elements.listPendingUsers) {
-            elements.listPendingUsers.innerHTML = pending.map(user => {
-                const uid = user.uid || user.id;
-                const avatarHtml = user.fotoUrl
-                    ? `<div class="user-avatar-circle"><img src="${escapeHtml(user.fotoUrl)}" alt="${escapeHtml(user.nome || user.email)}"></div>`
-                    : `<div class="user-avatar-circle" style="background-color: ${getAvatarColor(user.nome || user.email)};">${(user.nome ? user.nome.charAt(0) : user.email.charAt(0)).toUpperCase()}</div>`;
-
-                const dateFormatted = formatUserDate(user.created_at);
-                const cargo = user.cargo || (user.role === 'gestor' ? 'Gestor' : 'Funcionário');
-
-                return `
-                    <div class="user-card-item" id="user-card-${uid}">
-                        <div class="user-card-left">
-                            ${avatarHtml}
-                            <div class="user-card-info">
-                                <span class="user-card-name">${escapeHtml(user.nome || user.email)}</span>
-                                <span class="user-card-email">${escapeHtml(user.email)}</span>
-                                <span class="user-card-date">Cadastrado em: ${dateFormatted}</span>
-                            </div>
-                        </div>
-                        <div class="user-card-actions">
-                            <select class="user-role-select" id="role-select-${uid}">
-                                <option value="Funcionário" ${cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
-                                <option value="Gestor" ${cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
-                            </select>
-                            <button class="btn-user-approve" onclick="handleUserApprove('${uid}')" title="Aprovar Usuário">
-                                <i class="fas fa-check"></i>
-                                <span>Aprovar</span>
-                            </button>
-                            <button class="btn-user-reject" onclick="handleUserReject('${uid}', '${escapeHtml(user.nome || user.email)}')" title="Recusar Cadastro">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-
-    // 2. Renderiza Usuários Cadastrados
-    if (registered.length === 0) {
-        if (elements.emptyRegisteredUsers) elements.emptyRegisteredUsers.style.display = 'flex';
-        if (elements.listRegisteredUsers) elements.listRegisteredUsers.innerHTML = '';
-    } else {
-        if (elements.emptyRegisteredUsers) elements.emptyRegisteredUsers.style.display = 'none';
-        if (elements.listRegisteredUsers) {
-            elements.listRegisteredUsers.innerHTML = registered.map(user => {
-                const uid = user.uid || user.id;
-                const avatarHtml = user.fotoUrl
-                    ? `<div class="user-avatar-circle"><img src="${escapeHtml(user.fotoUrl)}" alt="${escapeHtml(user.nome || user.email)}"></div>`
-                    : `<div class="user-avatar-circle" style="background-color: ${getAvatarColor(user.nome || user.email)};">${(user.nome ? user.nome.charAt(0) : user.email.charAt(0)).toUpperCase()}</div>`;
-
-                const dateFormatted = formatUserDate(user.created_at);
-                const cargo = user.cargo || (user.role === 'gestor' ? 'Gestor' : 'Funcionário');
-
-                return `
-                    <div class="user-card-item" id="user-card-${uid}">
-                        <div class="user-card-left">
-                            ${avatarHtml}
-                            <div class="user-card-info">
-                                <span class="user-card-name">${escapeHtml(user.nome || user.email)}</span>
-                                <span class="user-card-email">${escapeHtml(user.email)}</span>
-                                <span class="user-card-date">Cadastrado em: ${dateFormatted}</span>
-                            </div>
-                        </div>
-                        <div class="user-card-actions">
-                            <select class="user-role-select" onchange="handleUserRoleChange('${uid}', this.value)">
-                                <option value="Funcionário" ${cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
-                                <option value="Gestor" ${cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
-                            </select>
-                            <button class="btn-user-delete" onclick="handleUserDelete('${uid}', '${escapeHtml(user.nome || user.email)}')" title="Excluir Usuário">
-                                <i class="far fa-trash-alt"></i>
-                            </button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-    }
-}
-
-// Ação de Aprovar Usuário
-async function handleUserApprove(uid) {
-    const roleSelect = document.getElementById(`role-select-${uid}`);
-    const selectedCargo = roleSelect ? roleSelect.value : 'Funcionário';
-
-    if (db) {
-        try {
-            await db.collection('usuarios').doc(uid).update({
-                aprovado: true,
-                cargo: selectedCargo,
-                role: selectedCargo.toLowerCase()
-            });
-            showToast(`Usuário aprovado como ${selectedCargo}!`, "success");
-        } catch (error) {
-            console.error("Erro ao aprovar usuário no Firestore:", error);
-            showToast("Erro ao aprovar usuário no banco de dados.", "error");
-            return;
-        }
-    } else {
-        const simulated = getSimulatedUsers();
-        const user = simulated.find(u => u.uid === uid || u.id === uid);
-        if (user) {
-            user.aprovado = true;
-            user.cargo = selectedCargo;
-            saveSimulatedUsers(simulated);
-            showToast(`Usuário ${user.nome || user.email} aprovado como ${selectedCargo}!`, "success");
-        }
-    }
-
-    await loadUsersList();
-}
-
-// Ação de Recusar Cadastro
-async function handleUserReject(uid, userName) {
-    if (!confirm(`Deseja realmente recusar o cadastro de ${userName}?`)) {
-        return;
-    }
-
-    if (db) {
-        try {
-            await db.collection('usuarios').doc(uid).delete();
-            showToast("Cadastro recusado e removido.", "success");
-        } catch (error) {
-            console.error("Erro ao recusar usuário no Firestore:", error);
-            showToast("Erro ao remover cadastro no Firebase.", "error");
-            return;
-        }
-    } else {
-        let simulated = getSimulatedUsers();
-        simulated = simulated.filter(u => u.uid !== uid && u.id !== uid);
-        saveSimulatedUsers(simulated);
-        showToast("Cadastro recusado com sucesso.", "success");
-    }
-
-    await loadUsersList();
-}
-
-// Ação de Alterar Perfil/Cargo (Gestor / Funcionário)
-async function handleUserRoleChange(uid, newRole) {
-    if (db) {
-        try {
-            await db.collection('usuarios').doc(uid).update({
-                cargo: newRole,
-                role: newRole.toLowerCase()
-            });
-            showToast(`Cargo atualizado para ${newRole}!`, "success");
-        } catch (error) {
-            console.error("Erro ao alterar cargo no Firestore:", error);
-            showToast("Erro ao atualizar perfil no Firebase.", "error");
-            return;
-        }
-    } else {
-        const simulated = getSimulatedUsers();
-        const user = simulated.find(u => u.uid === uid || u.id === uid);
-        if (user) {
-            user.cargo = newRole;
-            saveSimulatedUsers(simulated);
-            showToast(`Cargo de ${user.nome || user.email} atualizado para ${newRole}!`, "success");
-        }
-    }
-}
-
-// Ação de Excluir Usuário Cadastrado
-async function handleUserDelete(uid, userName) {
-    if (!confirm(`Tem certeza que deseja excluir o usuário ${userName} do sistema? Ele perderá o acesso.`)) {
-        return;
-    }
-
-    if (db) {
-        try {
-            await db.collection('usuarios').doc(uid).delete();
-            showToast("Usuário excluído com sucesso!", "success");
-        } catch (error) {
-            console.error("Erro ao excluir usuário no Firestore:", error);
-            showToast("Erro ao excluir usuário no Firebase.", "error");
-            return;
-        }
-    } else {
-        let simulated = getSimulatedUsers();
-        simulated = simulated.filter(u => u.uid !== uid && u.id !== uid);
-        saveSimulatedUsers(simulated);
-        showToast("Usuário excluído com sucesso!", "success");
-    }
-
-    await loadUsersList();
-}
-
-// Atualização visual do badge de usuários pendentes na barra lateral
-function updatePendingBadgeUI(count) {
     if (elements.badgePendingIndicator) {
-        elements.badgePendingIndicator.textContent = count;
-        elements.badgePendingIndicator.style.display = count > 0 ? 'inline-block' : 'none';
-    }
-}
-
-// Monitora em tempo real a existência de novos cadastros pendentes
-let pendingUsersUnsubscribe = null;
-function setupPendingUsersBadgeListener() {
-    if (pendingUsersUnsubscribe) {
-        pendingUsersUnsubscribe();
-        pendingUsersUnsubscribe = null;
+        elements.badgePendingIndicator.textContent = pending.length;
+        elements.badgePendingIndicator.style.display = pending.length > 0 ? 'inline-block' : 'none';
     }
 
-    if (db) {
-        try {
-            pendingUsersUnsubscribe = db.collection('usuarios')
-                .where('aprovado', '==', false)
-                .onSnapshot(snapshot => {
-                    const count = snapshot.size;
-                    updatePendingBadgeUI(count);
-                    if (elements.countPendingTab) {
-                        elements.countPendingTab.textContent = count;
-                    }
-                }, err => {
-                    console.log("Observação: listener em tempo real de usuários pendentes inativo:", err.message);
-                });
-        } catch (e) {
-            console.warn("Falha ao inicializar listener de pendentes:", e);
+    // 1. Renderiza lista de Pendentes
+    if (elements.listPendingUsers && elements.emptyPendingUsers) {
+        if (pending.length === 0) {
+            elements.listPendingUsers.innerHTML = '';
+            elements.emptyPendingUsers.style.display = 'flex';
+        } else {
+            elements.emptyPendingUsers.style.display = 'none';
+            elements.listPendingUsers.innerHTML = pending.map(u => {
+                const initials = getUserInitials(u.nome);
+                const avatarBg = getAvatarColor(u.email || u.uid);
+                const dateStr = formatUserDate(u.created_at);
+                const safeName = escapeHtml(u.nome);
+                const safeEmail = escapeHtml(u.email);
+
+                const avatarHtml = u.fotoUrl 
+                    ? `<img src="${escapeHtml(u.fotoUrl)}" alt="${safeName}">` 
+                    : initials;
+
+                return `
+                    <div class="user-card-item" id="user-card-${u.uid}">
+                        <div class="user-card-left">
+                            <div class="user-avatar-circle" style="background: ${avatarBg};">
+                                ${avatarHtml}
+                            </div>
+                            <div class="user-card-info">
+                                <div class="user-card-name">${safeName}</div>
+                                <div class="user-card-email"><i class="far fa-envelope" style="margin-right: 4px;"></i>${safeEmail}</div>
+                                <div class="user-card-date">Solicitado em: ${dateStr}</div>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <select class="user-role-select" id="role-select-${u.uid}" title="Definir Cargo">
+                                <option value="Funcionário" ${u.cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
+                                <option value="Vendedor" ${u.cargo === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
+                                <option value="Consultor" ${u.cargo === 'Consultor' ? 'selected' : ''}>Consultor</option>
+                                <option value="Gestor" ${u.cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
+                                <option value="Administrador" ${u.cargo === 'Administrador' ? 'selected' : ''}>Administrador</option>
+                            </select>
+                            <button class="btn-user-approve" onclick="handleUserApprove('${u.uid}')" title="Aprovar Acesso">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                            <button class="btn-user-reject" onclick="handleUserReject('${u.uid}', '${safeName}')" title="Recusar Cadastro">
+                                <i class="fas fa-times"></i> Recusar
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
-    } else {
-        const simulated = getSimulatedUsers();
-        const pendingCount = simulated.filter(u => !u.aprovado).length;
-        updatePendingBadgeUI(pendingCount);
+    }
+
+    // 2. Renderiza lista de Cadastrados
+    if (elements.listRegisteredUsers && elements.emptyRegisteredUsers) {
+        if (registered.length === 0) {
+            elements.listRegisteredUsers.innerHTML = '';
+            elements.emptyRegisteredUsers.style.display = 'flex';
+        } else {
+            elements.emptyRegisteredUsers.style.display = 'none';
+            elements.listRegisteredUsers.innerHTML = registered.map(u => {
+                const initials = getUserInitials(u.nome);
+                const avatarBg = getAvatarColor(u.email || u.uid);
+                const dateStr = formatUserDate(u.created_at);
+                const safeName = escapeHtml(u.nome);
+                const safeEmail = escapeHtml(u.email);
+
+                const avatarHtml = u.fotoUrl 
+                    ? `<img src="${escapeHtml(u.fotoUrl)}" alt="${safeName}">` 
+                    : initials;
+
+                return `
+                    <div class="user-card-item" id="user-card-${u.uid}">
+                        <div class="user-card-left">
+                            <div class="user-avatar-circle" style="background: ${avatarBg};">
+                                ${avatarHtml}
+                            </div>
+                            <div class="user-card-info">
+                                <div class="user-card-name">${safeName}</div>
+                                <div class="user-card-email"><i class="far fa-envelope" style="margin-right: 4px;"></i>${safeEmail}</div>
+                                <div class="user-card-date">Cadastrado em: ${dateStr}</div>
+                            </div>
+                        </div>
+                        <div class="user-card-actions">
+                            <select class="user-role-select" onchange="handleUserRoleChange('${u.uid}', this.value)" title="Alterar Cargo">
+                                <option value="Funcionário" ${u.cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
+                                <option value="Vendedor" ${u.cargo === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
+                                <option value="Consultor" ${u.cargo === 'Consultor' ? 'selected' : ''}>Consultor</option>
+                                <option value="Gestor" ${u.cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
+                                <option value="Administrador" ${u.cargo === 'Administrador' ? 'selected' : ''}>Administrador</option>
+                            </select>
+                            <button class="btn-user-delete" onclick="handleUserDelete('${u.uid}', '${safeName}')" title="Excluir Usuário">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
     }
 }
 
-// Exporta funções para o escopo global (para cliques nos botões HTML gerados dinamicamente)
+// Ação: Aprovar Usuário
+async function handleUserApprove(uid) {
+    if (!db) {
+        showToast("Firebase não está conectado.", "error");
+        return;
+    }
+
+    const selectElem = document.getElementById(`role-select-${uid}`);
+    const selectedRole = selectElem ? selectElem.value : 'Funcionário';
+
+    showToast("Aprovando usuário...", "info");
+
+    try {
+        await db.collection('usuarios').doc(uid).update({
+            aprovado: true,
+            cargo: selectedRole
+        });
+        showToast("Usuário aprovado com sucesso!", "success");
+        await loadUsersList();
+    } catch (error) {
+        console.error("Erro ao aprovar usuário:", error);
+        showToast("Erro ao aprovar: " + (error.message || error), "error");
+    }
+}
+
+// Ação: Recusar Usuário (Remove solicitação)
+async function handleUserReject(uid, userName) {
+    if (!db) {
+        showToast("Firebase não está conectado.", "error");
+        return;
+    }
+
+    const confirmed = confirm(`Deseja realmente recusar e remover a solicitação de "${userName || 'este usuário'}"?`);
+    if (!confirmed) return;
+
+    showToast("Removendo solicitação...", "info");
+
+    try {
+        await db.collection('usuarios').doc(uid).delete();
+        showToast("Solicitação de usuário recusada.", "info");
+        await loadUsersList();
+    } catch (error) {
+        console.error("Erro ao recusar usuário:", error);
+        showToast("Erro ao recusar: " + (error.message || error), "error");
+    }
+}
+
+// Ação: Alterar Cargo de Usuário já Cadastrado
+async function handleUserRoleChange(uid, newRole) {
+    if (!db) {
+        showToast("Firebase não está conectado.", "error");
+        return;
+    }
+
+    try {
+        await db.collection('usuarios').doc(uid).update({
+            cargo: newRole
+        });
+        showToast(`Cargo atualizado para "${newRole}".`, "success");
+    } catch (error) {
+        console.error("Erro ao atualizar cargo:", error);
+        showToast("Erro ao atualizar cargo: " + (error.message || error), "error");
+    }
+}
+
+// Ação: Excluir Usuário
+async function handleUserDelete(uid, userName) {
+    if (!db) {
+        showToast("Firebase não está conectado.", "error");
+        return;
+    }
+
+    const currentUser = firebase.auth().currentUser;
+    if (currentUser && currentUser.uid === uid) {
+        const sure = confirm("Atenção: Você está excluindo o seu próprio usuário logado! Seu acesso será revogado. Deseja continuar?");
+        if (!sure) return;
+    } else {
+        const confirmed = confirm(`Tem certeza de que deseja excluir o usuário "${userName || 'selecionado'}"? O acesso será revogado imediatamente.`);
+        if (!confirmed) return;
+    }
+
+    showToast("Excluindo usuário...", "info");
+
+    try {
+        await db.collection('usuarios').doc(uid).delete();
+        showToast("Usuário excluído com sucesso.", "success");
+        await loadUsersList();
+    } catch (error) {
+        console.error("Erro ao excluir usuário:", error);
+        showToast("Erro ao excluir: " + (error.message || error), "error");
+    }
+}
+
+// Exporta funções para o escopo global para que os atributos inline onclick/onchange funcionem
 window.handleUserApprove = handleUserApprove;
 window.handleUserReject = handleUserReject;
 window.handleUserRoleChange = handleUserRoleChange;
