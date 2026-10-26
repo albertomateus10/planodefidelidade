@@ -564,13 +564,14 @@ main {
     position: absolute;
     width: 4cqw;
     height: 4cqw;
-    background: var(--brand-green);
+    background: rgba(85, 239, 142, 0.5); /* verde claro translúcido: deixa o número da revisão visível */
+    border: 2px solid rgba(16, 172, 132, 0.85);
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     transform: translate(-50%, -50%);
-    box-shadow: 0 4px 14px rgba(16, 172, 132, 0.5);
+    box-shadow: 0 2px 8px rgba(16, 172, 132, 0.35);
     z-index: 20;
     cursor: pointer;
     animation: checkIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
@@ -578,7 +579,7 @@ main {
 }
 
 .check-mark-free i {
-    color: white;
+    color: #0a7d4f;
     font-size: 1.8cqw;
     font-weight: 900;
     line-height: 1;
@@ -1530,17 +1531,18 @@ footer {
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    width: 5.8% !important;
-    height: 5.8% !important;
-    margin-left: -2.9% !important; /* Metade de 5.8% para centralização horizontal */
-    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique (-2.9% seria centralizado) */
+    /* Tabuleiro tem 240mm de largura fixa no PDF: usa mm para um círculo perfeito */
+    width: 9.6mm !important;
+    height: 9.6mm !important;
+    margin-left: -4.8mm !important; /* Metade da largura: centraliza horizontalmente no círculo da revisão */
+    margin-top: -4.8mm !important;  /* Metade da altura: centraliza verticalmente */
     transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
     animation: none !important;      /* Desativa animação de entrada */
-    box-shadow: 0 4px 10px rgba(16, 172, 132, 0.4) !important;
+    box-shadow: 0 2px 6px rgba(16, 172, 132, 0.3) !important;
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free i {
-    font-size: 4.2mm !important;    /* Força tamanho visível em mm independente de cqw */
+    font-size: 4.3mm !important;    /* Força tamanho visível em mm independente de cqw */
     line-height: 1 !important;
     display: block !important;
 }

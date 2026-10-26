@@ -858,8 +858,8 @@ const REVISION_CENTERS = [
     { x: 55.6, y: 68.7 }, // 9ª
     { x: 71.0, y: 68.7 }  // 10ª
 ];
-// Deslocamento vertical (em % da altura) para o check ficar acima do círculo, sem cobrir o número
-const CHECK_OFFSET_Y = 4.3;
+// Deslocamento vertical (em % da altura) do check em relação ao centro do círculo (0 = centralizado)
+const CHECK_OFFSET_Y = 0;
 // Proporção da imagem (largura/altura) para calcular distâncias reais
 const BOARD_RATIO = 2480 / 1748;
 
