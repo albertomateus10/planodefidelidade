@@ -1403,8 +1403,6 @@ footer {
 .voucher-fidelity-board {
     margin: 0 auto;
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-    aspect-ratio: 1748 / 2481;   /* Proporção exata da imagem verticalnota10.png */
-    container-type: inline-size; /* Habilita container queries para os checks */
 }
 
 /* Desativa cliques no tabuleiro do voucher */
@@ -1452,8 +1450,8 @@ footer {
 
 /* Estilos aplicados APENAS durante a geração do PDF com html2pdf */
 .voucher-print-area.exporting-pdf {
-    width: 210mm !important;  /* Largura exata A4 retrato */
-    height: 297mm !important; /* Altura exata A4 retrato */
+    width: 297mm !important;  /* Largura exata A4 paisagem */
+    height: 420mm !important; /* 2 páginas A4 paisagem = 2 × 210mm — força corte exato na metade */
     overflow: hidden !important;
     padding: 0 !important;
     margin: 0 !important;
@@ -1461,24 +1459,44 @@ footer {
     display: block !important;
 }
 
-/* Página única ocupa exatamente 1 folha A4 retrato */
+/* Cada página ocupa exatamente 1 folha A4 paisagem */
 .voucher-print-area.exporting-pdf .voucher-pdf-page {
-    width: 210mm !important;
-    height: 297mm !important;
-    padding: 6mm !important;
+    width: 297mm !important;
+    height: 210mm !important;
+    padding: 10mm !important;
     box-sizing: border-box !important;
     display: flex !important;
     flex-direction: column !important;
-    justify-content: flex-start !important;
+    justify-content: space-between !important;
     align-items: center !important;
     overflow: hidden !important;
+    /* SEM page-break: o html2pdf corta automaticamente no canvas pela altura */
 }
 
 .voucher-print-area.exporting-pdf .voucher-vehicle-header {
     width: 100% !important;
-    padding-bottom: 4px !important;
-    margin-bottom: 4px !important;
+    padding-bottom: 10px !important;
+    margin-bottom: 10px !important;
     box-sizing: border-box !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-recommendation-card {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    width: 100% !important;
+    margin: 0 !important; /* Zera margens externas herdadas */
+    box-sizing: border-box !important;
+}
+
+.voucher-print-area.exporting-pdf .voucher-rec-img {
+    max-width: 100% !important;
+    max-height: 135mm !important; /* Limita a altura para caber junto com o cabeçalho */
+    width: auto !important;
+    height: auto !important;
+    object-fit: contain !important;
+    box-shadow: none !important;
 }
 
 .voucher-print-area.exporting-pdf .voucher-board-wrapper {
@@ -1488,47 +1506,43 @@ footer {
     align-items: center !important;
     width: 100% !important;
     height: 100% !important;
-    margin: 0 !important;
+    margin: 0 !important; /* Zera margens externas herdadas */
     padding: 0 !important;
     box-sizing: border-box !important;
 }
 
-/* A imagem vertical tem proporção portrait — cabe perfeitamente em A4 retrato */
 .voucher-print-area.exporting-pdf .voucher-fidelity-board {
-    width: 190mm !important;
-    max-width: 190mm !important;
-    height: auto !important;
-    max-height: 255mm !important;
-    aspect-ratio: 1748 / 2481 !important;  /* Garante altura proporcional para que % das bolas funcione */
+    width: 240mm !important;
+    max-width: 240mm !important;
+    /* Altura explícita: necessária para que top: Y% dos checks seja calculado
+       corretamente pelo browser ao chamar offsetHeight */
+    height: calc(240mm * 1748 / 2481) !important; /* ≈ 168.9mm */
+    aspect-ratio: 2481 / 1748 !important;
     margin: 0 auto !important;
     padding: 0 !important;
     box-shadow: none !important;
     position: relative !important;
-    container-type: inline-size !important;
-    overflow: visible !important;
 }
 
 .voucher-print-area.exporting-pdf .voucher-fidelity-board .board-bg-img {
     width: 100% !important;
     height: auto !important;
-    max-height: 255mm !important;
-    object-fit: contain !important;
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    width: 5.5% !important;
-    height: 5.5% !important;
-    transform: translate(-50%, -50%) !important; /* Mantém centralização correta sobre o ponto clicado */
-    animation: none !important;                  /* Desativa animação de entrada */
+    width: 5.8% !important;
+    height: 5.8% !important;
+    margin-left: -2.9% !important; /* Metade de 5.8% para centralização horizontal */
+    margin-top: -1.7% !important;  /* Desloca ligeiramente para baixo em relação ao clique (-2.9% seria centralizado) */
+    transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
+    animation: none !important;      /* Desativa animação de entrada */
     box-shadow: 0 4px 10px rgba(16, 172, 132, 0.4) !important;
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free i {
-    font-size: 2.2cqw !important;   /* cqw relativo ao container (board), igual ao modo normal */
+    font-size: 4.2mm !important;    /* Força tamanho visível em mm independente de cqw */
     line-height: 1 !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
+    display: block !important;
 }
 
 /* Configuração de Impressão */
@@ -1565,30 +1579,37 @@ footer {
         print-color-adjust: exact !important;
     }
     
-    /* Ajustes específicos para orientação Retrato no PDF / Impressão */
+    /* Ajustes específicos para a orientação Paisagem no PDF / Impressão */
     .voucher-vehicle-header {
-        padding-bottom: 4px !important;
-        margin-bottom: 6px !important;
+        padding-bottom: 8px !important;
+        margin-bottom: 12px !important;
+    }
+
+    .voucher-rec-img {
+        width: 220mm !important;
+        max-height: 155mm !important;
+        height: auto !important;
+        margin: 0 auto !important;
+        border-radius: 20px !important;
+        display: block !important;
     }
     
     .voucher-fidelity-board {
-        width: 170mm !important;
-        max-height: 240mm !important;
+        width: 220mm !important;
+        max-height: 155mm !important;
         margin: 0 auto !important;
-        aspect-ratio: auto !important;
+        aspect-ratio: 2481 / 1748 !important;
     }
     
     .voucher-fidelity-board .board-bg-img {
         width: 100% !important;
         height: auto !important;
-        max-height: 240mm !important;
-        object-fit: contain !important;
-        border-radius: 12px !important;
+        border-radius: 20px !important;
     }
     
     @page {
-        margin: 0.5cm;
-        size: portrait;
+        margin: 0.8cm;
+        size: landscape;
     }
 }
 

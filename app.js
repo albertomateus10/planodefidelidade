@@ -20,20 +20,6 @@ let activeConfig = {
     adminPin: "1234"
 };
 
-// Coordenadas perfeitas correspondentes a cada uma das 10 revisões na imagem de fundo (paisagem)
-const PERFECT_COORDINATES = [
-    { x: 35.0, y: 26.2 }, // 1ª Revisão
-    { x: 55.8, y: 26.2 }, // 2ª Revisão
-    { x: 76.6, y: 26.2 }, // 3ª Revisão
-    { x: 87.5, y: 43.5 }, // 4ª Revisão
-    { x: 66.2, y: 48.0 }, // 5ª Revisão
-    { x: 45.4, y: 48.0 }, // 6ª Revisão
-    { x: 23.5, y: 61.5 }, // 7ª Revisão
-    { x: 35.0, y: 68.2 }, // 8ª Revisão
-    { x: 55.8, y: 68.2 }, // 9ª Revisão
-    { x: 76.6, y: 68.2 }  // 10ª Revisão
-];
-
 // Elementos do DOM
 const elements = {
     // Formulários e painéis
@@ -610,21 +596,22 @@ function setupEventListeners() {
             }
 
             const rect = elements.mainBoard.getBoundingClientRect();
-            const clickX = parseFloat(((e.clientX - rect.left) / rect.width * 100).toFixed(2));
-            const clickY = parseFloat(((e.clientY - rect.top) / rect.height * 100).toFixed(2));
+            const clickX = (e.clientX - rect.left) / rect.width * 100;
+            const clickY = (e.clientY - rect.top) / rect.height * 100;
 
-            // Encontra a coordenada perfeita mais próxima do clique
-            let nearest = PERFECT_COORDINATES[0];
-            let minDist = Math.hypot(PERFECT_COORDINATES[0].x - clickX, PERFECT_COORDINATES[0].y - clickY);
-            for (let i = 1; i < PERFECT_COORDINATES.length; i++) {
-                const dist = Math.hypot(PERFECT_COORDINATES[i].x - clickX, PERFECT_COORDINATES[i].y - clickY);
-                if (dist < minDist) {
-                    minDist = dist;
-                    nearest = PERFECT_COORDINATES[i];
-                }
+            // Encaixa o check na revisão mais próxima do clique
+            const rev = findNearestRevision(clickX, clickY);
+            if (rev === -1) {
+                showToast("Clique sobre uma revisão para marcá-la.", "error");
+                return;
+            }
+            if (marcacoes.some(m => m.rev === rev)) {
+                showToast(`A ${rev + 1}ª revisão já está marcada. Clique no check para remover.`, "error");
+                return;
             }
 
-            marcacoes.push({ x: nearest.x, y: nearest.y });
+            const pos = getRevisionCheckPos(rev);
+            marcacoes.push({ x: pos.x, y: pos.y, rev });
             await saveCheckmarks(marcacoes);
         });
     }
@@ -659,9 +646,6 @@ function setupEventListeners() {
             const hoje = new Date();
             elements.voucherData.textContent = hoje.toLocaleDateString('pt-BR');
             
-            // Renderiza as marcações (bolas de check) no tabuleiro do voucher
-            renderCheckmarks(currentVehicle.marcacoes || [], elements.voucherBoard);
-            
             showModal(elements.voucherModal);
         });
     }
@@ -689,7 +673,7 @@ function setupEventListeners() {
                 filename:    `voucher_${currentVehicle.placa || 'san_marino'}.pdf`,
                 image:       { type: 'jpeg', quality: 1.0 },
                 html2canvas: { scale: 3, useCORS: true, allowTaint: true, backgroundColor: '#ffffff', imageTimeout: 0, logging: false },
-                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                jsPDF:       { unit: 'mm', format: 'a4', orientation: 'landscape' }
             };
 
             // 3. Gera e baixa o PDF
@@ -861,57 +845,72 @@ async function saveCheckmarks(marcacoes) {
     }
 }
 
-// Renderiza os checks livres em um board
-// Mapeamento de coordenadas entre tabuleiro principal (nota10.png, paisagem)
-// e tabuleiro do voucher (verticalnota10.png, retrato).
-// Na imagem vertical, o tabuleiro (pista) ocupa uma sub-região:
-//   X: de ~4% a ~96%  da largura  (escala ~0.92, offset ~4%)
-//   Y: de ~39% a ~91% da altura   (escala ~0.52, offset ~39%)
-const VOUCHER_BOARD_MAP = {
-    xOffset: 3,     // % de início horizontal do tabuleiro na imagem vertical
-    xScale:  0.93,  // fração da largura que o tabuleiro ocupa na imagem vertical
-    yOffset: 42,    // % de início vertical do tabuleiro na imagem vertical
-    yScale:  0.55   // fração da altura que o tabuleiro ocupa na imagem vertical
-};
+// Centro (em %) do círculo de cada uma das 10 revisões na imagem nota10.png
+const REVISION_CENTERS = [
+    { x: 38.3, y: 26.3 }, // 1ª
+    { x: 55.2, y: 26.3 }, // 2ª
+    { x: 71.4, y: 26.3 }, // 3ª
+    { x: 82.2, y: 39.9 }, // 4ª
+    { x: 63.5, y: 48.5 }, // 5ª
+    { x: 46.3, y: 48.5 }, // 6ª
+    { x: 29.2, y: 54.4 }, // 7ª
+    { x: 41.2, y: 68.7 }, // 8ª
+    { x: 55.6, y: 68.7 }, // 9ª
+    { x: 71.0, y: 68.7 }  // 10ª
+];
+// Deslocamento vertical (em % da altura) para o check ficar acima do círculo, sem cobrir o número
+const CHECK_OFFSET_Y = 4.3;
+// Proporção da imagem (largura/altura) para calcular distâncias reais
+const BOARD_RATIO = 2480 / 1748;
 
+// Posição do check (em %) acima do círculo da revisão informada
+function getRevisionCheckPos(revIndex) {
+    const c = REVISION_CENTERS[revIndex];
+    return { x: c.x, y: parseFloat((c.y - CHECK_OFFSET_Y).toFixed(2)) };
+}
+
+// Retorna o índice da revisão mais próxima de um ponto (em %) ou -1 se estiver longe demais
+function findNearestRevision(x, y, maxDist = 9) {
+    let best = -1;
+    let bestDist = Infinity;
+    REVISION_CENTERS.forEach((c, i) => {
+        const dx = (x - c.x) * BOARD_RATIO; // normaliza para a mesma escala do eixo Y
+        const dy = (y - c.y);
+        const d = Math.hypot(dx, dy);
+        if (d < bestDist) { bestDist = d; best = i; }
+    });
+    return bestDist <= maxDist ? best : -1;
+}
+
+// Renderiza os checks acima dos círculos das revisões em um board
 function renderCheckmarks(marcacoes, boardEl) {
     if (!boardEl) return;
     // Remove checks antigos
     boardEl.querySelectorAll('.check-mark-free').forEach(el => el.remove());
 
-    const isVoucherBoard = boardEl.id === 'voucher-fidelity-board';
+    const lista = marcacoes || [];
+    // Revisões já ocupadas por marcações novas (com campo rev)
+    const usadas = new Set(lista.filter(m => typeof m.rev === 'number').map(m => m.rev));
 
-    // Adiciona cada marcação
-    (marcacoes || []).forEach((pos, idx) => {
-        let x = pos.x;
-        let y = pos.y;
-
-        // Faz snap para a coordenada perfeita mais próxima
-        let nearest = PERFECT_COORDINATES[0];
-        let minDist = Math.hypot(PERFECT_COORDINATES[0].x - x, PERFECT_COORDINATES[0].y - y);
-        for (let i = 1; i < PERFECT_COORDINATES.length; i++) {
-            const dist = Math.hypot(PERFECT_COORDINATES[i].x - x, PERFECT_COORDINATES[i].y - y);
-            if (dist < minDist) {
-                minDist = dist;
-                nearest = PERFECT_COORDINATES[i];
-            }
+    lista.forEach((pos, idx) => {
+        let rev = pos.rev;
+        // Marcações antigas (posição livre) são encaixadas na revisão mais próxima disponível
+        if (typeof rev !== 'number') {
+            let bestDist = Infinity;
+            REVISION_CENTERS.forEach((c, i) => {
+                if (usadas.has(i)) return;
+                const d = Math.hypot((pos.x - c.x) * BOARD_RATIO, pos.y - c.y);
+                if (d < bestDist) { bestDist = d; rev = i; }
+            });
+            if (typeof rev === 'number') usadas.add(rev);
         }
-
-        // Utiliza a coordenada perfeita encontrada para desenhar
-        x = nearest.x;
-        y = nearest.y;
-
-        // Converte coordenadas do tabuleiro paisagem para a imagem vertical do voucher
-        if (isVoucherBoard) {
-            x = VOUCHER_BOARD_MAP.xOffset + (x * VOUCHER_BOARD_MAP.xScale / 100) * 100;
-            y = VOUCHER_BOARD_MAP.yOffset + (y * VOUCHER_BOARD_MAP.yScale / 100) * 100;
-        }
+        const p = typeof rev === 'number' ? getRevisionCheckPos(rev) : pos;
 
         const el = document.createElement('div');
         el.className = 'check-mark-free';
         el.dataset.index = idx;
-        el.style.left = x + '%';
-        el.style.top  = y + '%';
+        el.style.left = p.x + '%';
+        el.style.top  = p.y + '%';
         el.innerHTML = '<i class="fas fa-check"></i>';
         boardEl.appendChild(el);
     });
