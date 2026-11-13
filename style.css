@@ -562,8 +562,8 @@ main {
 /* Check livre posicionado no clique */
 .check-mark-free {
     position: absolute;
-    width: 5.85cqw;
-    height: 5.85cqw;
+    width: 6.4%;
+    height: 9.08%;
     background: transparent;
     border: none;
     border-radius: 50%;
@@ -1528,11 +1528,11 @@ footer {
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    /* Tabuleiro tem 240mm de largura fixa no PDF: 5.85% de 240mm ≈ 14mm */
-    width: 14mm !important;
-    height: 14mm !important;
-    margin-left: -7mm !important; /* Metade da largura: centraliza horizontalmente no círculo da revisão */
-    margin-top: -7mm !important;  /* Metade da altura: centraliza verticalmente */
+    /* Tabuleiro tem 240mm de largura fixa no PDF: 6.4% de 240mm ≈ 15.4mm */
+    width: 15.4mm !important;
+    height: 15.4mm !important;
+    margin-left: -7.7mm !important; /* Metade da largura: centraliza horizontalmente no círculo da revisão */
+    margin-top: -7.7mm !important;  /* Metade da altura: centraliza verticalmente */
     transform: none !important;   /* Desativa transform translate para evitar bugs no html2canvas */
     animation: none !important;   /* Desativa animação de entrada */
     background: transparent !important;
