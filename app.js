@@ -4,8 +4,22 @@
 let db = null; // Banco de dados do Firestore
 let currentVehicle = null;
 let isAdmin = true;
+let currentUserRole = 'Consultor'; // 'Gestor' ou 'Consultor'
 let managerVehiclesList = []; // Cache local de veículos para o dashboard do gestor
 let currentFilteredVehiclesList = []; // Lista filtrada de veículos em exibição no dashboard
+
+function normalizeUserRole(cargo) {
+    if (!cargo) return 'Consultor';
+    const c = String(cargo).trim().toLowerCase();
+    if (c === 'gestor' || c === 'administrador' || c === 'admin') {
+        return 'Gestor';
+    }
+    return 'Consultor';
+}
+
+function isCurrentUserGestor() {
+    return currentUserRole === 'Gestor';
+}
 
 // Configurações ativas
 let activeConfig = {
@@ -41,6 +55,19 @@ const elements = {
     infoConcessionaria: document.getElementById('info-concessionaria'),
     infoConsultor: document.getElementById('info-consultor'),
     infoData: document.getElementById('info-data'),
+    btnEditVehicle: document.getElementById('btn-edit-vehicle'),
+    btnDeleteVehicle: document.getElementById('btn-delete-vehicle'),
+
+    // Modal de Edição de Veículo
+    editVehicleModal: document.getElementById('edit-vehicle-modal'),
+    editVehicleForm: document.getElementById('edit-vehicle-form'),
+    editVehId: document.getElementById('edit-veh-id'),
+    editVehPlaca: document.getElementById('edit-veh-placa'),
+    editVehChassi: document.getElementById('edit-veh-chassi'),
+    editVehConcessionaria: document.getElementById('edit-veh-concessionaria'),
+    editVehConsultor: document.getElementById('edit-veh-consultor'),
+    closeEditVehicle: document.getElementById('close-edit-vehicle'),
+    cancelEditVehicle: document.getElementById('cancel-edit-vehicle'),
     
     // Modais
     configModal: document.getElementById('config-modal'),
@@ -56,6 +83,7 @@ const elements = {
     
     logoMain: document.querySelector('.logo-main'),
     userMenu: document.getElementById('user-menu'),
+    userRoleBadge: document.getElementById('user-role-badge'),
     
     // Grid e Revisões
     mainBoard: document.getElementById('main-fidelity-board'),
@@ -233,7 +261,7 @@ function setupLandingScreen() {
                             uid: cred.user.uid,
                             nome: nome || formatNameFromEmail(email),
                             email: email,
-                            cargo: 'Funcionário',
+                            cargo: 'Consultor',
                             aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
@@ -281,7 +309,7 @@ function setupLandingScreen() {
                         uid: user.uid,
                         nome: user.displayName || formatNameFromEmail(user.email),
                         email: user.email,
-                        cargo: 'Funcionário',
+                        cargo: 'Consultor',
                         aprovado: false,
                         fotoUrl: user.photoURL || '',
                         created_at: firebase.firestore.FieldValue.serverTimestamp()
@@ -398,7 +426,9 @@ function setupAuthListener() {
                         // Novo cadastro ou usuário sem registro no Firestore
                         await db.collection('usuarios').doc(user.uid).set({
                             uid: user.uid,
+                            nome: user.displayName || formatNameFromEmail(user.email),
                             email: user.email,
+                            cargo: 'Consultor',
                             aprovado: false,
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
@@ -415,6 +445,9 @@ function setupAuthListener() {
                         await firebase.auth().signOut();
                         return;
                     }
+
+                    currentUserRole = normalizeUserRole(userData.cargo);
+                    applyUserPermissions();
                 } catch (error) {
                     console.error("Erro ao verificar liberação de usuário:", error);
                     if (error.code === 'permission-denied') {
@@ -774,6 +807,164 @@ function setupEventListeners() {
             switchUsersTab('registered');
         });
     }
+
+    // Event Listeners de Edição e Exclusão de Veículo
+    if (elements.btnEditVehicle) {
+        elements.btnEditVehicle.addEventListener('click', () => {
+            if (!currentVehicle) return;
+            openEditVehicleModal(currentVehicle);
+        });
+    }
+
+    if (elements.btnDeleteVehicle) {
+        elements.btnDeleteVehicle.addEventListener('click', async () => {
+            if (!currentVehicle) return;
+            await deleteVehicleFromDb(currentVehicle);
+        });
+    }
+
+    if (elements.closeEditVehicle) {
+        elements.closeEditVehicle.addEventListener('click', () => {
+            hideModal(elements.editVehicleModal);
+        });
+    }
+
+    if (elements.cancelEditVehicle) {
+        elements.cancelEditVehicle.addEventListener('click', () => {
+            hideModal(elements.editVehicleModal);
+        });
+    }
+
+    if (elements.editVehicleForm) {
+        elements.editVehicleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await saveEditedVehicle();
+        });
+    }
+}
+
+// Aplicar permissões visuais de acordo com o nível do usuário (Gestor vs Consultor)
+function applyUserPermissions() {
+    const gestor = isCurrentUserGestor();
+
+    if (elements.userRoleBadge) {
+        elements.userRoleBadge.textContent = currentUserRole;
+        elements.userRoleBadge.className = `user-role-badge ${gestor ? 'role-gestor' : 'role-consultor'}`;
+        elements.userRoleBadge.style.display = 'inline-flex';
+    }
+
+    if (elements.btnDeleteVehicle) {
+        elements.btnDeleteVehicle.style.display = (gestor && currentVehicle) ? 'inline-flex' : 'none';
+    }
+
+    // Se o modal do relatório geral estiver aberto, re-renderiza a tabela para refletir o botão de excluir
+    if (elements.managerModal && elements.managerModal.classList.contains('active')) {
+        renderManagerDashboardTable(currentFilteredVehiclesList);
+    }
+}
+
+// Abrir modal de edição de veículo (disponível para Gestor e Consultor)
+function openEditVehicleModal(vehicle) {
+    if (!vehicle || !elements.editVehicleModal) return;
+    elements.editVehId.value = vehicle.id || '';
+    elements.editVehPlaca.value = vehicle.placa || '';
+    elements.editVehChassi.value = vehicle.chassi || '';
+    elements.editVehConcessionaria.value = vehicle.concessionaria || '';
+    elements.editVehConsultor.value = vehicle.consultor || '';
+    showModal(elements.editVehicleModal);
+}
+
+// Salvar edição das informações do veículo no Firestore (permitido para Gestor e Consultor)
+async function saveEditedVehicle() {
+    if (!db) {
+        showToast("Banco de dados Firebase não inicializado.", "error");
+        return;
+    }
+
+    const id = elements.editVehId.value.trim();
+    const placa = elements.editVehPlaca.value.trim().toUpperCase();
+    const chassi = elements.editVehChassi.value.trim().toUpperCase();
+    const concessionaria = elements.editVehConcessionaria.value.trim();
+    const consultor = elements.editVehConsultor.value.trim();
+
+    if (!id || !placa || !chassi || !concessionaria || !consultor) {
+        showToast("Preencha todos os campos do veículo.", "error");
+        return;
+    }
+
+    try {
+        await db.collection('veiculos').doc(id).update({
+            placa,
+            chassi,
+            concessionaria,
+            consultor,
+            updated_at: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Atualiza veículo ativo na tela principal se for o mesmo
+        if (currentVehicle && currentVehicle.id === id) {
+            currentVehicle = {
+                ...currentVehicle,
+                placa,
+                chassi,
+                concessionaria,
+                consultor
+            };
+            displayVehicleData(currentVehicle);
+        }
+
+        // Atualiza lista local do relatório geral se carregada
+        const idx = managerVehiclesList.findIndex(v => v.id === id);
+        if (idx !== -1) {
+            managerVehiclesList[idx] = {
+                ...managerVehiclesList[idx],
+                placa,
+                chassi,
+                concessionaria,
+                consultor
+            };
+            updateManagerKpisFromList();
+            filterManagerDashboardTable();
+        }
+
+        invalidateVehiclesCache();
+        hideModal(elements.editVehicleModal);
+        showToast("Informações do veículo atualizadas com sucesso!", "success");
+    } catch (error) {
+        console.error("Erro ao editar veículo:", error);
+        showToast("Erro ao salvar alterações do veículo.", "error");
+    }
+}
+
+// Excluir veículo do banco de dados (PERMITIDO APENAS PARA GESTOR)
+async function deleteVehicleFromDb(vehicle) {
+    if (!isCurrentUserGestor()) {
+        showToast("Apenas usuários com nível Gestor podem excluir veículos do banco de dados.", "error");
+        return;
+    }
+
+    if (!db || !vehicle || !vehicle.id) return;
+
+    const confirmed = confirm(`Tem certeza que deseja excluir permanentemente o veículo de placa "${vehicle.placa || '-'}" do banco de dados?`);
+    if (!confirmed) return;
+
+    try {
+        await db.collection('veiculos').doc(vehicle.id).delete();
+
+        if (currentVehicle && currentVehicle.id === vehicle.id) {
+            resetVehicleDisplay();
+        }
+
+        managerVehiclesList = managerVehiclesList.filter(v => v.id !== vehicle.id);
+        updateManagerKpisFromList();
+        filterManagerDashboardTable();
+        invalidateVehiclesCache();
+
+        showToast(`Veículo ${vehicle.placa || ''} excluído do banco de dados!`, "success");
+    } catch (error) {
+        console.error("Erro ao excluir veículo:", error);
+        showToast("Erro ao excluir veículo do Firebase.", "error");
+    }
 }
 
 // 4. Funções do Firestore
@@ -902,16 +1093,16 @@ async function saveCheckmarks(marcacoes) {
 
 // Centro (em %) do círculo de cada uma das 10 revisões na imagem nota10.png
 const REVISION_CENTERS = [
-    { x: 38.3, y: 26.3 }, // 1ª
-    { x: 55.2, y: 26.3 }, // 2ª
-    { x: 71.4, y: 26.3 }, // 3ª
-    { x: 82.2, y: 39.9 }, // 4ª
-    { x: 63.5, y: 48.5 }, // 5ª
-    { x: 46.3, y: 48.5 }, // 6ª
-    { x: 29.2, y: 54.4 }, // 7ª
-    { x: 41.2, y: 68.7 }, // 8ª
-    { x: 55.6, y: 68.7 }, // 9ª
-    { x: 71.0, y: 68.7 }  // 10ª
+    { x: 38.4, y: 26.2 }, // 1ª
+    { x: 55.3, y: 26.2 }, // 2ª
+    { x: 71.4, y: 26.2 }, // 3ª
+    { x: 82.2, y: 40.0 }, // 4ª
+    { x: 63.5, y: 48.4 }, // 5ª
+    { x: 46.2, y: 48.4 }, // 6ª
+    { x: 29.2, y: 54.7 }, // 7ª
+    { x: 41.2, y: 68.9 }, // 8ª
+    { x: 55.6, y: 68.9 }, // 9ª
+    { x: 71.0, y: 68.9 }  // 10ª
 ];
 // Deslocamento vertical (em % da altura) do check em relação ao centro do círculo (0 = centralizado)
 const CHECK_OFFSET_Y = 0;
@@ -966,7 +1157,7 @@ function renderCheckmarks(marcacoes, boardEl) {
         el.dataset.index = idx;
         el.style.left = p.x + '%';
         el.style.top  = p.y + '%';
-        el.innerHTML = '<i class="fas fa-check"></i>';
+        el.innerHTML = '<img src="Check.png" alt="Check" draggable="false">';
         boardEl.appendChild(el);
     });
 }
@@ -1106,6 +1297,10 @@ function displayVehicleData(vehicle) {
     }
     elements.infoData.textContent = dateStr;
     
+    if (elements.btnDeleteVehicle) {
+        elements.btnDeleteVehicle.style.display = isCurrentUserGestor() ? 'inline-flex' : 'none';
+    }
+
     elements.vehicleDetails.style.display = 'block';
 }
 
@@ -1267,6 +1462,56 @@ async function openManagerDashboard() {
     }
 }
 
+function updateManagerKpisFromList() {
+    const totalVehicles = managerVehiclesList.length;
+    const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
+
+    const concCounts = {};
+    managerVehiclesList.forEach(v => {
+        const conc = (v.concessionaria || 'Não informada').trim();
+        if (conc) {
+            concCounts[conc] = (concCounts[conc] || 0) + 1;
+        }
+    });
+
+    let topConc = 'Nenhuma';
+    let maxCount = 0;
+    for (const [conc, count] of Object.entries(concCounts)) {
+        if (count > maxCount) {
+            maxCount = count;
+            topConc = conc;
+        }
+    }
+
+    const consultorCounts = {};
+    managerVehiclesList.forEach(v => {
+        const consultor = (v.consultor || '').trim();
+        if (consultor && consultor !== 'Não informado') {
+            consultorCounts[consultor] = (consultorCounts[consultor] || 0) + 1;
+        }
+    });
+
+    let topConsultor = 'Nenhum';
+    let maxConsultorCount = 0;
+    for (const [consultor, count] of Object.entries(consultorCounts)) {
+        if (count > maxConsultorCount) {
+            maxConsultorCount = count;
+            topConsultor = consultor;
+        }
+    }
+
+    if (elements.kpiTotalVehicles) elements.kpiTotalVehicles.textContent = totalVehicles;
+    if (elements.kpiTotalRevisions) elements.kpiTotalRevisions.textContent = totalRevisions;
+    if (elements.kpiTopConcessionaria) {
+        elements.kpiTopConcessionaria.textContent = topConc;
+        elements.kpiTopConcessionaria.title = topConc;
+    }
+    if (elements.kpiTopConsultor) {
+        elements.kpiTopConsultor.textContent = topConsultor;
+        elements.kpiTopConsultor.title = topConsultor;
+    }
+}
+
 function renderManagerDashboardTable(vehicles) {
     if (!elements.managerTableBody) return;
     elements.managerTableBody.innerHTML = '';
@@ -1278,6 +1523,8 @@ function renderManagerDashboardTable(vehicles) {
     }
 
     if (elements.managerTableEmpty) elements.managerTableEmpty.style.display = 'none';
+
+    const gestor = isCurrentUserGestor();
 
     vehicles.forEach(vehicle => {
         const tr = document.createElement('tr');
@@ -1302,6 +1549,7 @@ function renderManagerDashboardTable(vehicles) {
 
         const actionsCell = document.createElement('td');
         actionsCell.style.textAlign = 'center';
+        actionsCell.style.whiteSpace = 'nowrap';
         
         const viewBtn = document.createElement('button');
         viewBtn.className = 'btn-table-action';
@@ -1314,8 +1562,29 @@ function renderManagerDashboardTable(vehicles) {
             hideModal(elements.managerModal);
             showToast(`Veículo ${vehicle.placa} carregado!`, "success");
         });
-
         actionsCell.appendChild(viewBtn);
+
+        // Botão Editar (disponível para Gestor e Consultor)
+        const editBtn = document.createElement('button');
+        editBtn.className = 'btn-table-edit';
+        editBtn.innerHTML = '<i class="fas fa-pen"></i> Editar';
+        editBtn.title = 'Editar informações do veículo';
+        editBtn.addEventListener('click', () => {
+            openEditVehicleModal(vehicle);
+        });
+        actionsCell.appendChild(editBtn);
+
+        // Botão Excluir (disponível APENAS para Gestor)
+        if (gestor) {
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn-table-delete';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i> Excluir';
+            deleteBtn.title = 'Excluir veículo do banco de dados';
+            deleteBtn.addEventListener('click', async () => {
+                await deleteVehicleFromDb(vehicle);
+            });
+            actionsCell.appendChild(deleteBtn);
+        }
 
         tr.appendChild(placaCell);
         tr.appendChild(chassiCell);
@@ -1420,15 +1689,14 @@ function exportManagerDataToExcel() {
 let pendingUsersUnsubscribe = null;
 let currentLoadedUsers = [];
 
-// Paleta de gradientes vibrantes para os avatares dos usuários
+// Cores sólidas para os avatares dos usuários (idênticas ao padrão visual do painel)
 const AVATAR_PALETTES = [
-    'linear-gradient(135deg, #3b82f6, #1d4ed8)', // Azul
-    'linear-gradient(135deg, #10b981, #047857)', // Esmeralda
-    'linear-gradient(135deg, #8b5cf6, #6d28d9)', // Violeta
-    'linear-gradient(135deg, #f59e0b, #d97706)', // Âmbar
-    'linear-gradient(135deg, #ec4899, #be185d)', // Rosa
-    'linear-gradient(135deg, #06b6d4, #0e7490)', // Ciano
-    'linear-gradient(135deg, #ef4444, #b91c1c)'  // Vermelho
+    '#2e7d32', // Verde
+    '#0277bd', // Azul
+    '#00838f', // Ciano escuro / Teal
+    '#6a1b9a', // Roxo
+    '#c62828', // Vermelho
+    '#ef6c00'  // Laranja
 ];
 
 function getAvatarColor(identifier) {
@@ -1443,11 +1711,8 @@ function getAvatarColor(identifier) {
 
 function getUserInitials(name) {
     if (!name) return 'U';
-    const parts = name.trim().split(/\s+/).filter(Boolean);
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-    }
-    return name.slice(0, 2).toUpperCase();
+    const trimmed = name.trim();
+    return trimmed ? trimmed.charAt(0).toUpperCase() : 'U';
 }
 
 function formatNameFromEmail(email) {
@@ -1471,7 +1736,7 @@ function formatUserDate(timestamp) {
         date = new Date(timestamp);
     }
     if (isNaN(date.getTime())) return 'Data não informada';
-    return date.toLocaleDateString('pt-BR') + ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleDateString('pt-BR') + ', ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function escapeHtml(str) {
@@ -1484,7 +1749,7 @@ function escapeHtml(str) {
         .replace(/'/g, '&#39;');
 }
 
-// Listener em tempo real para contagem de solicitações pendentes e atualização do badge
+// Listener em tempo real para contagem de solicitações pendentes, atualização do badge e sincronia de cargo
 function setupPendingUsersBadgeListener() {
     if (!db) return;
     if (pendingUsersUnsubscribe) {
@@ -1494,10 +1759,19 @@ function setupPendingUsersBadgeListener() {
     try {
         pendingUsersUnsubscribe = db.collection('usuarios').onSnapshot(snapshot => {
             let pendingCount = 0;
+            const currentUser = firebase.auth().currentUser;
+
             snapshot.forEach(doc => {
                 const data = doc.data();
                 if (data && !data.aprovado) {
                     pendingCount++;
+                }
+                if (currentUser && doc.id === currentUser.uid && data) {
+                    const updatedRole = normalizeUserRole(data.cargo);
+                    if (updatedRole !== currentUserRole) {
+                        currentUserRole = updatedRole;
+                        applyUserPermissions();
+                    }
                 }
             });
 
@@ -1507,6 +1781,7 @@ function setupPendingUsersBadgeListener() {
             }
             if (elements.countPendingTab) {
                 elements.countPendingTab.textContent = pendingCount;
+                elements.countPendingTab.style.display = pendingCount > 0 ? 'inline-flex' : 'none';
             }
         }, error => {
             console.warn("Aviso ao escutar novos cadastros pendentes:", error);
@@ -1575,7 +1850,7 @@ async function loadUsersList() {
                 uid: data.uid || doc.id,
                 email: data.email || '',
                 nome: data.nome || formatNameFromEmail(data.email),
-                cargo: data.cargo || 'Funcionário',
+                cargo: normalizeUserRole(data.cargo),
                 aprovado: data.aprovado === true,
                 fotoUrl: data.fotoUrl || '',
                 created_at: data.created_at || null
@@ -1602,8 +1877,13 @@ function renderUsersPanel(users) {
     const pending = users.filter(u => !u.aprovado);
     const registered = users.filter(u => u.aprovado);
 
-    if (elements.countPendingTab) elements.countPendingTab.textContent = pending.length;
-    if (elements.countRegisteredTab) elements.countRegisteredTab.textContent = registered.length;
+    if (elements.countPendingTab) {
+        elements.countPendingTab.textContent = pending.length;
+        elements.countPendingTab.style.display = pending.length > 0 ? 'inline-flex' : 'none';
+    }
+    if (elements.countRegisteredTab) {
+        elements.countRegisteredTab.textContent = registered.length;
+    }
     if (elements.badgePendingIndicator) {
         elements.badgePendingIndicator.textContent = pending.length;
         elements.badgePendingIndicator.style.display = pending.length > 0 ? 'inline-block' : 'none';
@@ -1622,6 +1902,7 @@ function renderUsersPanel(users) {
                 const dateStr = formatUserDate(u.created_at);
                 const safeName = escapeHtml(u.nome);
                 const safeEmail = escapeHtml(u.email);
+                const role = normalizeUserRole(u.cargo);
 
                 const avatarHtml = u.fotoUrl 
                     ? `<img src="${escapeHtml(u.fotoUrl)}" alt="${safeName}">` 
@@ -1635,17 +1916,14 @@ function renderUsersPanel(users) {
                             </div>
                             <div class="user-card-info">
                                 <div class="user-card-name">${safeName}</div>
-                                <div class="user-card-email"><i class="far fa-envelope" style="margin-right: 4px;"></i>${safeEmail}</div>
+                                <div class="user-card-email">${safeEmail}</div>
                                 <div class="user-card-date">Solicitado em: ${dateStr}</div>
                             </div>
                         </div>
                         <div class="user-card-actions">
-                            <select class="user-role-select" id="role-select-${u.uid}" title="Definir Cargo">
-                                <option value="Funcionário" ${u.cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
-                                <option value="Vendedor" ${u.cargo === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
-                                <option value="Consultor" ${u.cargo === 'Consultor' ? 'selected' : ''}>Consultor</option>
-                                <option value="Gestor" ${u.cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
-                                <option value="Administrador" ${u.cargo === 'Administrador' ? 'selected' : ''}>Administrador</option>
+                            <select class="user-role-select" id="role-select-${u.uid}" title="Definir Nível de Acesso">
+                                <option value="Consultor" ${role === 'Consultor' ? 'selected' : ''}>Consultor</option>
+                                <option value="Gestor" ${role === 'Gestor' ? 'selected' : ''}>Gestor</option>
                             </select>
                             <button class="btn-user-approve" onclick="handleUserApprove('${u.uid}')" title="Aprovar Acesso">
                                 <i class="fas fa-check"></i> Aprovar
@@ -1673,6 +1951,7 @@ function renderUsersPanel(users) {
                 const dateStr = formatUserDate(u.created_at);
                 const safeName = escapeHtml(u.nome);
                 const safeEmail = escapeHtml(u.email);
+                const role = normalizeUserRole(u.cargo);
 
                 const avatarHtml = u.fotoUrl 
                     ? `<img src="${escapeHtml(u.fotoUrl)}" alt="${safeName}">` 
@@ -1686,20 +1965,22 @@ function renderUsersPanel(users) {
                             </div>
                             <div class="user-card-info">
                                 <div class="user-card-name">${safeName}</div>
-                                <div class="user-card-email"><i class="far fa-envelope" style="margin-right: 4px;"></i>${safeEmail}</div>
+                                <div class="user-card-email">${safeEmail}</div>
                                 <div class="user-card-date">Cadastrado em: ${dateStr}</div>
                             </div>
                         </div>
                         <div class="user-card-actions">
-                            <select class="user-role-select" onchange="handleUserRoleChange('${u.uid}', this.value)" title="Alterar Cargo">
-                                <option value="Funcionário" ${u.cargo === 'Funcionário' ? 'selected' : ''}>Funcionário</option>
-                                <option value="Vendedor" ${u.cargo === 'Vendedor' ? 'selected' : ''}>Vendedor</option>
-                                <option value="Consultor" ${u.cargo === 'Consultor' ? 'selected' : ''}>Consultor</option>
-                                <option value="Gestor" ${u.cargo === 'Gestor' ? 'selected' : ''}>Gestor</option>
-                                <option value="Administrador" ${u.cargo === 'Administrador' ? 'selected' : ''}>Administrador</option>
+                            <select class="user-role-select" onchange="handleUserRoleChange('${u.uid}', this.value)" title="Alterar Nível de Acesso">
+                                <option value="Consultor" ${role === 'Consultor' ? 'selected' : ''}>Consultor</option>
+                                <option value="Gestor" ${role === 'Gestor' ? 'selected' : ''}>Gestor</option>
                             </select>
                             <button class="btn-user-delete" onclick="handleUserDelete('${u.uid}', '${safeName}')" title="Excluir Usuário">
-                                <i class="fas fa-trash-alt"></i>
+                                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="3 6 5 6 21 6"></polyline>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                </svg>
                             </button>
                         </div>
                     </div>
@@ -1717,7 +1998,7 @@ async function handleUserApprove(uid) {
     }
 
     const selectElem = document.getElementById(`role-select-${uid}`);
-    const selectedRole = selectElem ? selectElem.value : 'Funcionário';
+    const selectedRole = normalizeUserRole(selectElem ? selectElem.value : 'Consultor');
 
     showToast("Aprovando usuário...", "info");
 
@@ -1763,14 +2044,23 @@ async function handleUserRoleChange(uid, newRole) {
         return;
     }
 
+    const normalizedRole = normalizeUserRole(newRole);
+
     try {
         await db.collection('usuarios').doc(uid).update({
-            cargo: newRole
+            cargo: normalizedRole
         });
-        showToast(`Cargo atualizado para "${newRole}".`, "success");
+
+        const currentUser = firebase.auth().currentUser;
+        if (currentUser && currentUser.uid === uid) {
+            currentUserRole = normalizedRole;
+            applyUserPermissions();
+        }
+
+        showToast(`Nível de acesso atualizado para "${normalizedRole}".`, "success");
     } catch (error) {
         console.error("Erro ao atualizar cargo:", error);
-        showToast("Erro ao atualizar cargo: " + (error.message || error), "error");
+        showToast("Erro ao atualizar nível de acesso: " + (error.message || error), "error");
     }
 }
 

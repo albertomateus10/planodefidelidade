@@ -562,36 +562,33 @@ main {
 /* Check livre posicionado no clique */
 .check-mark-free {
     position: absolute;
-    width: 4cqw;
-    height: 4cqw;
-    background: rgba(85, 239, 142, 0.5); /* verde claro translúcido: deixa o número da revisão visível */
-    border: 2px solid rgba(16, 172, 132, 0.85);
+    width: 5.85cqw;
+    height: 5.85cqw;
+    background: transparent;
+    border: none;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     transform: translate(-50%, -50%);
-    box-shadow: 0 2px 8px rgba(16, 172, 132, 0.35);
     z-index: 20;
     cursor: pointer;
     animation: checkIn 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     pointer-events: auto;
 }
 
-.check-mark-free i {
-    color: #0a7d4f;
-    font-size: 1.8cqw;
-    font-weight: 900;
-    line-height: 1;
+.check-mark-free img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
     pointer-events: none;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    user-select: none;
+    filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.25));
 }
 
 .check-mark-free:hover {
-    filter: brightness(1.1);
-    box-shadow: 0 0 0 4px rgba(16, 172, 132, 0.35), 0 4px 14px rgba(16, 172, 132, 0.5);
+    filter: brightness(1.08) drop-shadow(0 0 6px rgba(16, 172, 132, 0.5));
 }
 
 @keyframes checkIn {
@@ -1531,20 +1528,24 @@ footer {
 }
 
 .voucher-print-area.exporting-pdf .check-mark-free {
-    /* Tabuleiro tem 240mm de largura fixa no PDF: usa mm para um círculo perfeito */
-    width: 9.6mm !important;
-    height: 9.6mm !important;
-    margin-left: -4.8mm !important; /* Metade da largura: centraliza horizontalmente no círculo da revisão */
-    margin-top: -4.8mm !important;  /* Metade da altura: centraliza verticalmente */
-    transform: none !important;      /* Desativa transform translate para evitar bugs no html2canvas */
-    animation: none !important;      /* Desativa animação de entrada */
-    box-shadow: 0 2px 6px rgba(16, 172, 132, 0.3) !important;
+    /* Tabuleiro tem 240mm de largura fixa no PDF: 5.85% de 240mm ≈ 14mm */
+    width: 14mm !important;
+    height: 14mm !important;
+    margin-left: -7mm !important; /* Metade da largura: centraliza horizontalmente no círculo da revisão */
+    margin-top: -7mm !important;  /* Metade da altura: centraliza verticalmente */
+    transform: none !important;   /* Desativa transform translate para evitar bugs no html2canvas */
+    animation: none !important;   /* Desativa animação de entrada */
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
-.voucher-print-area.exporting-pdf .check-mark-free i {
-    font-size: 4.3mm !important;    /* Força tamanho visível em mm independente de cqw */
-    line-height: 1 !important;
+.voucher-print-area.exporting-pdf .check-mark-free img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
     display: block !important;
+    filter: none !important;
 }
 
 /* Configuração de Impressão */
@@ -1818,6 +1819,132 @@ footer {
     box-shadow: 0 4px 10px rgba(16, 172, 132, 0.2);
 }
 
+.btn-table-edit {
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-table-edit:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    transform: translateY(-1px);
+}
+
+.btn-table-delete {
+    background: #fff5f5;
+    color: #ef4444;
+    border: 1px solid #fed7d7;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-table-delete:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    transform: translateY(-1px);
+}
+
+/* Badge de Nível do Usuário no Menu Lateral */
+.user-role-badge {
+    display: inline-block;
+    width: fit-content;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-top: 2px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.user-role-badge.role-gestor {
+    background: rgba(16, 172, 132, 0.15);
+    color: #0d9488;
+}
+
+.user-role-badge.role-consultor {
+    background: rgba(59, 130, 246, 0.12);
+    color: #2563eb;
+}
+
+/* Botões de Editar e Excluir nos Dados do Veículo (Painel Lateral) */
+.vehicle-detail-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px dashed rgba(0, 0, 0, 0.06);
+}
+
+.btn-vehicle-edit {
+    flex: 1;
+    background: #eff6ff;
+    color: #2563eb;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.76rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-vehicle-edit:hover {
+    background: #dbeafe;
+    border-color: #93c5fd;
+}
+
+.btn-vehicle-delete {
+    flex: 1;
+    background: #fff5f5;
+    color: #ef4444;
+    border: 1px solid #fed7d7;
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 700;
+    font-size: 0.76rem;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+}
+
+.btn-vehicle-delete:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #dc2626;
+}
+
 .badge-table-revisions {
     background: rgba(9, 132, 227, 0.1);
     color: #0984e3;
@@ -1891,45 +2018,80 @@ footer {
     100% { transform: scale(1); }
 }
 
-/* Modal Customizado de Gestão de Usuários */
+/* Modal Customizado de Gestão de Usuários (idêntico ao modelo das imagens) */
 .users-modal-content {
-    max-width: 840px !important;
+    max-width: 820px !important;
     width: 95% !important;
     max-height: 90vh !important;
-    overflow-y: auto !important;
-    padding: 28px 32px !important;
-    border-radius: 20px !important;
+    overflow: hidden !important;
+    padding: 0 !important;
+    border-radius: 16px !important;
     background: #ffffff !important;
     box-shadow: 0 25px 60px rgba(0, 0, 0, 0.28) !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
 .users-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 22px;
-    padding-right: 30px;
+    padding: 20px 28px;
+    border-bottom: 1px solid #f1f5f9;
+    background: #ffffff;
 }
 
-.users-header-shield-icon {
-    font-size: 1.5rem;
-    color: #ef4444;
+.users-modal-title-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.users-header-shield-svg {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
 }
 
 .users-modal-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 800;
-    font-size: 1.28rem;
+    font-size: 1.2rem;
     color: #0f172a;
     margin: 0;
     letter-spacing: -0.2px;
+}
+
+.users-modal-close-x {
+    background: none;
+    border: none;
+    font-size: 1.35rem;
+    line-height: 1;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.users-modal-close-x:hover {
+    color: #0f172a;
+    background: #f1f5f9;
+}
+
+.users-modal-body {
+    padding: 22px 28px 24px 28px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 /* Abas de Navegação */
 .users-tabs-bar {
     display: flex;
     gap: 12px;
-    margin-bottom: 22px;
+    padding-bottom: 18px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #f1f5f9;
 }
 
 .users-tab-btn {
@@ -1940,16 +2102,22 @@ footer {
     border-radius: 8px;
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    font-size: 0.92rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    background: #ffffff;
+    background: #f8fafc;
     color: #475569;
-    border: 1.5px solid #e2e8f0;
+    border: 1px solid #e2e8f0;
     transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
+.users-tab-svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
 .users-tab-btn:hover {
-    background: #f8fafc;
+    background: #f1f5f9;
     border-color: #cbd5e1;
     color: #1e293b;
 }
@@ -1958,14 +2126,14 @@ footer {
     background: #0f172a;
     color: #ffffff;
     border-color: #0f172a;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.18);
 }
 
 .users-tab-count {
-    background: rgba(0, 0, 0, 0.08);
-    color: inherit;
-    font-size: 0.75rem;
-    padding: 2px 7px;
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    font-size: 0.74rem;
+    padding: 1px 7px;
     border-radius: 20px;
     font-weight: 800;
 }
@@ -1980,9 +2148,9 @@ footer {
     display: flex;
     flex-direction: column;
     gap: 12px;
-    max-height: 480px;
+    max-height: 440px;
     overflow-y: auto;
-    padding-right: 6px;
+    padding-right: 4px;
 }
 
 .users-list-container::-webkit-scrollbar {
@@ -2001,10 +2169,10 @@ footer {
 
 /* Card Individual de Usuário */
 .user-card-item {
-    background: #f1f5f9;
-    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    border: 1px solid #eef2f6;
     border-radius: 12px;
-    padding: 14px 20px;
+    padding: 15px 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -2013,9 +2181,8 @@ footer {
 }
 
 .user-card-item:hover {
-    background: #ebf0f5;
-    border-color: #cbd5e1;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+    background: #f1f5f9;
+    border-color: #e2e8f0;
 }
 
 .user-card-left {
@@ -2028,17 +2195,16 @@ footer {
 
 /* Avatar de Usuário */
 .user-avatar-circle {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 800;
-    font-size: 1.15rem;
+    font-weight: 700;
+    font-size: 1rem;
     color: #ffffff;
     flex-shrink: 0;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     overflow: hidden;
 }
 
@@ -2058,7 +2224,7 @@ footer {
 .user-card-name {
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.96rem;
     color: #0f172a;
     white-space: nowrap;
     overflow: hidden;
@@ -2066,7 +2232,7 @@ footer {
 }
 
 .user-card-email {
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     color: #64748b;
     white-space: nowrap;
     overflow: hidden;
@@ -2074,7 +2240,7 @@ footer {
 }
 
 .user-card-date {
-    font-size: 0.78rem;
+    font-size: 0.76rem;
     color: #94a3b8;
     margin-top: 1px;
 }
@@ -2093,31 +2259,32 @@ footer {
     -webkit-appearance: none;
     background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23475569'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E") no-repeat right 10px center;
     background-size: 14px;
-    border: 1.5px solid #e2e8f0;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 7px 30px 7px 14px;
+    padding: 7px 32px 7px 14px;
     font-family: 'Outfit', sans-serif;
     font-weight: 600;
-    font-size: 0.88rem;
-    color: #1e293b;
+    font-size: 0.86rem;
+    color: #334155;
     cursor: pointer;
     outline: none;
     transition: all 0.2s ease;
 }
 
 .user-role-select:focus {
-    border-color: #0f172a;
-    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.1);
+    border-color: #94a3b8;
+    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.06);
 }
 
-/* Botão de Excluir (Lixeira idêntica ao modelo) */
+/* Botão de Excluir (Lixeira idêntica ao modelo da captura) */
 .btn-user-delete {
-    background: #ffffff;
-    border: 1.5px solid #fecaca;
+    background: #fff5f5;
+    border: 1px solid #fed7d7;
     border-radius: 8px;
-    padding: 8px 12px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
     color: #ef4444;
-    font-size: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
     display: flex;
@@ -2125,106 +2292,89 @@ footer {
     justify-content: center;
 }
 
+.btn-user-delete svg {
+    width: 17px;
+    height: 17px;
+}
+
 .btn-user-delete:hover {
-    background: #fef2f2;
-    border-color: #ef4444;
+    background: #fee2e2;
+    border-color: #fca5a5;
     color: #dc2626;
     transform: scale(1.04);
 }
 
 /* Botão de Aprovar Usuário */
 .btn-user-approve {
-    background: linear-gradient(135deg, #10b981, #059669);
+    background: #10b981;
     color: #ffffff;
     border: none;
     border-radius: 8px;
     padding: 8px 16px;
     font-family: 'Outfit', sans-serif;
     font-weight: 700;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25);
     transition: all 0.2s ease;
 }
 
 .btn-user-approve:hover {
-    background: linear-gradient(135deg, #059669, #047857);
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    background: #059669;
     transform: translateY(-1px);
-}
-
-/* Botão de Rejeitar Usuário */
-.btn-user-reject {
-    background: #ffffff;
-    border: 1.5px solid #fecaca;
-    border-radius: 8px;
-    padding: 8px 12px;
-    color: #ef4444;
-    font-size: 0.88rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: all 0.2s ease;
-}
-
-.btn-user-reject:hover {
-    background: #fef2f2;
-    border-color: #ef4444;
-    color: #dc2626;
 }
 
 /* Estado Vazio */
 .users-empty-state {
-    padding: 45px 20px;
+    padding: 55px 20px;
     text-align: center;
-    color: #64748b;
+    color: #94a3b8;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
-.users-empty-state i {
-    font-size: 2.5rem;
-    color: #cbd5e1;
+.users-empty-svg {
+    width: 44px;
+    height: 44px;
 }
 
 .users-empty-state p {
-    font-size: 0.95rem;
+    font-size: 0.96rem;
     font-weight: 600;
+    color: #94a3b8;
 }
 
 /* Rodapé do Modal */
 .users-modal-footer {
     display: flex;
     justify-content: flex-end;
-    margin-top: 24px;
-    padding-top: 18px;
+    padding: 14px 28px;
+    background: #f8fafc;
     border-top: 1px solid #f1f5f9;
 }
 
 .btn-users-close-footer {
-    background: #f1f5f9;
+    background: #ffffff;
     color: #475569;
-    border: 1px solid #cbd5e1;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    padding: 8px 24px;
+    padding: 8px 20px;
     font-family: 'Outfit', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
+    font-weight: 600;
+    font-size: 0.88rem;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .btn-users-close-footer:hover {
-    background: #e2e8f0;
+    background: #f1f5f9;
     color: #1e293b;
-    border-color: #94a3b8;
+    border-color: #cbd5e1;
 }
 
 @media (max-width: 640px) {

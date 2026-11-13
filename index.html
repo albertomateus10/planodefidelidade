@@ -121,9 +121,12 @@
 
                 <!-- Menu do Usuário Logado -->
                 <div class="user-menu" id="user-menu">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <i class="fas fa-user-circle" style="font-size: 1.1rem; color: var(--brand-red);"></i>
-                        <span class="user-email" id="user-email-display">-</span>
+                    <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
+                        <i class="fas fa-user-circle" style="font-size: 1.1rem; color: var(--brand-red); flex-shrink: 0;"></i>
+                        <div style="display: flex; flex-direction: column; min-width: 0;">
+                            <span class="user-email" id="user-email-display">-</span>
+                            <span class="user-role-badge" id="user-role-badge">Consultor</span>
+                        </div>
                     </div>
                     <button class="btn-logout" id="btn-logout" title="Sair">
                         <i class="fas fa-door-open" style="font-size: 1.1rem;"></i>
@@ -174,6 +177,18 @@
                         <div class="info-row">
                             <span class="info-label">Cadastrado em:</span>
                             <span class="info-value" id="info-data">-</span>
+                        </div>
+
+                        <!-- Ações do Veículo (Editar para todos / Excluir apenas para Gestor) -->
+                        <div class="vehicle-detail-actions">
+                            <button type="button" id="btn-edit-vehicle" class="btn-vehicle-edit" title="Editar informações do veículo">
+                                <i class="fas fa-pen"></i>
+                                <span>Editar</span>
+                            </button>
+                            <button type="button" id="btn-delete-vehicle" class="btn-vehicle-delete" style="display: none;" title="Excluir veículo do banco de dados">
+                                <i class="fas fa-trash-alt"></i>
+                                <span>Excluir</span>
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -436,52 +451,108 @@
             </div>
         </div>
 
+        <!-- MODAL: Editar Informações do Veículo -->
+        <div class="modal-overlay" id="edit-vehicle-modal">
+            <div class="modal-content" style="max-width: 460px; position: relative;">
+                <button class="modal-close" id="close-edit-vehicle" title="Fechar">&times;</button>
+                <h3 class="modal-title" style="display: flex; align-items: center; gap: 10px; font-size: 1.25rem;">
+                    <i class="fas fa-edit" style="color: var(--brand-green);"></i>
+                    Editar Informações do Veículo
+                </h3>
+                <form id="edit-vehicle-form">
+                    <input type="hidden" id="edit-veh-id">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="edit-veh-placa">Placa</label>
+                        <input type="text" id="edit-veh-placa" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="edit-veh-chassi">Chassi</label>
+                        <input type="text" id="edit-veh-chassi" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label for="edit-veh-concessionaria">Concessionária vendedora</label>
+                        <input type="text" id="edit-veh-concessionaria" class="form-input" required>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label for="edit-veh-consultor">Consultor</label>
+                        <input type="text" id="edit-veh-consultor" class="form-input" required>
+                    </div>
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button type="button" id="cancel-edit-vehicle" class="btn-users-close-footer">Cancelar</button>
+                        <button type="submit" class="btn-premium" style="width: auto; padding: 10px 22px; font-size: 0.85rem;">
+                            <i class="fas fa-save"></i> Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
         <!-- MODAL: Painel de Aprovação e Gestão de Usuários -->
         <div class="modal-overlay" id="users-management-modal">
             <div class="modal-content users-modal-content">
-                <button class="modal-close" id="close-users-modal" title="Fechar">&times;</button>
-                
                 <!-- Cabeçalho do Modal -->
                 <div class="users-modal-header">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <i class="fas fa-shield-alt users-header-shield-icon"></i>
+                    <div class="users-modal-title-group">
+                        <svg class="users-header-shield-svg" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            <path d="m9 12 2 2 4-4"></path>
+                        </svg>
                         <h3 class="users-modal-title">Painel de Aprovação e Gestão de Usuários</h3>
                     </div>
+                    <button class="users-modal-close-x" id="close-users-modal" title="Fechar">&times;</button>
                 </div>
 
-                <!-- Abas: Aguardando Aprovação vs Usuários Cadastrados -->
-                <div class="users-tabs-bar">
-                    <button class="users-tab-btn" id="tab-btn-pending">
-                        <i class="far fa-clock"></i>
-                        <span>Aguardando Aprovação</span>
-                        <span class="users-tab-count" id="count-pending-tab">0</span>
-                    </button>
-                    <button class="users-tab-btn active" id="tab-btn-registered">
-                        <i class="fas fa-user-friends"></i>
-                        <span>Usuários Cadastrados</span>
-                        <span class="users-tab-count" id="count-registered-tab">0</span>
-                    </button>
-                </div>
+                <!-- Corpo do Modal -->
+                <div class="users-modal-body">
+                    <!-- Abas: Aguardando Aprovação vs Usuários Cadastrados -->
+                    <div class="users-tabs-bar">
+                        <button class="users-tab-btn" id="tab-btn-pending">
+                            <svg class="users-tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                            </svg>
+                            <span>Aguardando Aprovação</span>
+                            <span class="users-tab-count" id="count-pending-tab" style="display: none;">0</span>
+                        </button>
+                        <button class="users-tab-btn active" id="tab-btn-registered">
+                            <svg class="users-tab-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <span>Usuários Cadastrados</span>
+                        </button>
+                    </div>
 
-                <!-- Conteúdo Aba: Aguardando Aprovação -->
-                <div class="users-tab-pane" id="pane-pending" style="display: none;">
-                    <div class="users-list-container" id="list-pending-users">
-                        <!-- Inserido dinamicamente via Firestore -->
+                    <!-- Conteúdo Aba: Aguardando Aprovação -->
+                    <div class="users-tab-pane" id="pane-pending" style="display: none;">
+                        <div class="users-list-container" id="list-pending-users">
+                            <!-- Inserido dinamicamente via Firestore -->
+                        </div>
+                        <div class="users-empty-state" id="empty-pending-users" style="display: none;">
+                            <svg class="users-empty-svg" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                            </svg>
+                            <p>Nenhum usuário aguardando aprovação no momento.</p>
+                        </div>
                     </div>
-                    <div class="users-empty-state" id="empty-pending-users" style="display: none;">
-                        <i class="far fa-clock"></i>
-                        <p>Nenhum usuário aguardando aprovação no momento.</p>
-                    </div>
-                </div>
 
-                <!-- Conteúdo Aba: Usuários Cadastrados -->
-                <div class="users-tab-pane active" id="pane-registered">
-                    <div class="users-list-container" id="list-registered-users">
-                        <!-- Inserido dinamicamente via Firestore -->
-                    </div>
-                    <div class="users-empty-state" id="empty-registered-users" style="display: none;">
-                        <i class="fas fa-users"></i>
-                        <p>Nenhum usuário cadastrado encontrado.</p>
+                    <!-- Conteúdo Aba: Usuários Cadastrados -->
+                    <div class="users-tab-pane active" id="pane-registered">
+                        <div class="users-list-container" id="list-registered-users">
+                            <!-- Inserido dinamicamente via Firestore -->
+                        </div>
+                        <div class="users-empty-state" id="empty-registered-users" style="display: none;">
+                            <svg class="users-empty-svg" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="9" cy="7" r="4"></circle>
+                                <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                            </svg>
+                            <p>Nenhum usuário cadastrado encontrado.</p>
+                        </div>
                     </div>
                 </div>
 
