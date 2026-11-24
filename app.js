@@ -160,59 +160,60 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // 0. Controle da Tela de Entrada (Landing Screen)
+let isGoogleLoginInProgress = false;
+
 function setupLandingScreen() {
     const googleLoginBtn = document.getElementById('google-login-btn');
     if (!googleLoginBtn) return;
 
-    // Login com Google
+    // Login com Google (tenta popup primeiro na ação direta do usuário e faz fallback para redirect se bloqueado)
     googleLoginBtn.addEventListener('click', async () => {
+        if (isGoogleLoginInProgress) return;
+
         if (!firebase.apps.length) {
             showToast("Firebase não está conectado ou inicializado corretamente.", "error");
             return;
         }
 
+        const provider = new firebase.auth.GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+
+        isGoogleLoginInProgress = true;
+        googleLoginBtn.disabled = true;
+
         try {
+            // Chama signInWithPopup imediatamente no gesto de clique para evitar bloqueio pelo navegador
+            const authPromise = firebase.auth().signInWithPopup(provider);
             showToast("Conectando com o Google...", "success");
-            const provider = new firebase.auth.GoogleAuthProvider();
-            const result = await firebase.auth().signInWithPopup(provider);
-            const user = result.user;
-            if (db && user) {
-                const docRef = db.collection('usuarios').doc(user.uid);
-                const docSnap = await docRef.get();
-                if (!docSnap.exists) {
-                    await docRef.set({
-                        uid: user.uid,
-                        nome: user.displayName || formatNameFromEmail(user.email),
-                        email: user.email,
-                        cargo: 'Consultor',
-                        aprovado: false,
-                        fotoUrl: user.photoURL || '',
-                        created_at: firebase.firestore.FieldValue.serverTimestamp()
-                    });
-                    showToast("Cadastro realizado com Google! Aguardando aprovação do gestor.", "success");
-                    await firebase.auth().signOut();
-                    return;
-                } else {
-                    const userData = docSnap.data();
-                    if (!userData.aprovado) {
-                        showToast("Sua conta está aguardando liberação do administrador.", "error");
-                        await firebase.auth().signOut();
-                        return;
-                    }
-                }
-            }
-            showToast("Login com Google realizado!", "success");
+            await authPromise;
         } catch (error) {
             console.error("Erro ao autenticar com o Google:", error);
-            let msg = "Erro ao autenticar com o Google. Tente novamente.";
-            if (error.code === 'auth/operation-not-allowed') {
-                msg = "O provedor Google Sign-In está desativado no Console do Firebase (Authentication).";
-            } else if (error.code === 'auth/unauthorized-domain') {
-                msg = "Este domínio não está autorizado no Console do Firebase (Authorized Domains). Adicione-o.";
-            } else if (error.message) {
-                msg = error.message;
+
+            if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
+                try {
+                    showToast("Pop-up bloqueado pelo navegador. Redirecionando para o login Google...", "success");
+                    await firebase.auth().signInWithRedirect(provider);
+                    return;
+                } catch (redirectError) {
+                    console.error("Erro no redirecionamento Google:", redirectError);
+                    showToast("Não foi possível abrir o login do Google. Verifique o bloqueador de pop-ups.", "error");
+                }
+            } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+                // Usuário fechou a janela ou clicou novamente; apenas restaura o botão
+            } else {
+                let msg = "Erro ao autenticar com o Google. Tente novamente.";
+                if (error.code === 'auth/operation-not-allowed') {
+                    msg = "O provedor Google Sign-In está desativado no Console do Firebase (Authentication).";
+                } else if (error.code === 'auth/unauthorized-domain') {
+                    msg = "Este domínio não está autorizado no Console do Firebase (Authorized Domains). Adicione-o.";
+                } else if (error.message) {
+                    msg = error.message;
+                }
+                showToast(msg, "error");
             }
-            showToast(msg, "error");
+        } finally {
+            isGoogleLoginInProgress = false;
+            googleLoginBtn.disabled = false;
         }
     });
 }
@@ -284,6 +285,20 @@ function setupAuthListener() {
     if (authListenerUnsubscribe) {
         authListenerUnsubscribe();
     }
+
+    // Captura erros ao retornar de eventual login via redirect (fallback de pop-up)
+    firebase.auth().getRedirectResult().catch((error) => {
+        if (!error) return;
+        console.error("Erro no retorno do login Google (redirect):", error);
+        if (error.code === 'auth/unauthorized-domain') {
+            showToast("Este domínio não está autorizado no Console do Firebase (Authorized Domains).", "error");
+        } else if (error.code === 'auth/operation-not-allowed') {
+            showToast("O provedor Google Sign-In está desativado no Console do Firebase.", "error");
+        } else if (error.code !== 'auth/popup-closed-by-user') {
+            showToast("Erro ao concluir login com Google: " + (error.message || error.code), "error");
+        }
+    });
+
     authListenerUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
         const landingScreen = document.getElementById('landing-screen');
         const mainApp = document.getElementById('main-app');
@@ -305,6 +320,7 @@ function setupAuthListener() {
                             email: user.email,
                             cargo: 'Consultor',
                             aprovado: false,
+                            fotoUrl: user.photoURL || '',
                             created_at: firebase.firestore.FieldValue.serverTimestamp()
                         });
                         console.log("Documento de usuário pendente criado com sucesso no Firestore.");
