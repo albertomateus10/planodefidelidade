@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <!-- Folha de estilos personalizada -->
-    <link rel="stylesheet" href="style.css?v=6">
+    <link rel="stylesheet" href="style.css?v=7">
 </head>
 
 <body>
@@ -98,16 +98,10 @@
                 </button>
 
                 <!-- Botão Painel de Aprovação e Gestão de Usuários -->
-                <button id="btn-users-panel" class="btn-premium btn-users-dashboard" style="margin-bottom: 6px; background: linear-gradient(135deg, #0f172a, #1e293b); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); position: relative;">
+                <button id="btn-users-panel" class="btn-premium btn-users-dashboard" style="margin-bottom: 10px; background: linear-gradient(135deg, #0f172a, #1e293b); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); position: relative;">
                     <i class="fas fa-user-shield" style="color: #ef4444;"></i>
                     <span>Gestão de Usuários</span>
                     <span id="badge-pending-indicator" class="users-pending-badge" style="display: none;">0</span>
-                </button>
-
-                <!-- Botão Cadastrar Consultores (Apenas Gestor) -->
-                <button id="btn-consultants-panel" class="btn-premium btn-consultants-dashboard" style="display: none; margin-bottom: 10px; background: linear-gradient(135deg, #1e293b, #334155); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);">
-                    <i class="fas fa-user-tie" style="color: #10ac84;"></i>
-                    <span>Cadastrar Consultor</span>
                 </button>
 
                 <!-- Menu do Usuário Logado -->
@@ -150,16 +144,8 @@
                             <i class="fas fa-info-circle" style="color: var(--brand-red);"></i> Dados do Veículo
                         </h4>
                         <div class="info-row">
-                            <span class="info-label">Placa:</span>
-                            <span class="info-value" id="info-placa">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Chassi:</span>
-                            <span class="info-value" id="info-chassi">-</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Concessionária:</span>
-                            <span class="info-value" id="info-concessionaria">-</span>
+                            <span class="info-label">Placa/Chassi:</span>
+                            <span class="info-value" id="info-placa-chassi">-</span>
                         </div>
                         <div class="info-row">
                             <span class="info-label">Consultor:</span>
@@ -199,16 +185,8 @@
                     </h3>
                     <form id="register-form">
                         <div class="form-group">
-                            <label for="reg-placa">Placa</label>
-                            <input type="text" id="reg-placa" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="reg-chassi">Chassi</label>
-                            <input type="text" id="reg-chassi" class="form-input" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="reg-concessionaria">Concessionária vendedora</label>
-                            <input type="text" id="reg-concessionaria" class="form-input" required>
+                            <label for="reg-placa-chassi">Placa/Chassi</label>
+                            <input type="text" id="reg-placa-chassi" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label for="reg-consultor">Consultor</label>
@@ -309,8 +287,7 @@
                         <div class="voucher-vehicle-header">
                             <h2>Plano de Fidelidade San Marino</h2>
                             <div class="voucher-vehicle-grid">
-                                <div><strong>Placa:</strong> <span id="voucher-placa">-</span></div>
-                                <div><strong>Chassi:</strong> <span id="voucher-chassi">-</span></div>
+                                <div><strong>Placa/Chassi:</strong> <span id="voucher-placa-chassi">-</span></div>
                                 <div><strong>Consultor:</strong> <span id="voucher-consultor">-</span></div>
                                 <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
                             </div>
@@ -396,17 +373,10 @@
                 <!-- Barra de Filtros e Busca -->
                 <div class="dashboard-filters">
                     <div class="filter-group">
-                        <label for="filter-placa">Filtrar por Placa</label>
+                        <label for="filter-placa-chassi">Filtrar por Placa/Chassi</label>
                         <div class="input-icon-wrapper">
                             <i class="fas fa-search"></i>
-                            <input type="text" id="filter-placa" class="form-input filter-input" placeholder="Ex: ABC1D23" autocomplete="off">
-                        </div>
-                    </div>
-                    <div class="filter-group">
-                        <label for="filter-chassi">Filtrar por Chassi</label>
-                        <div class="input-icon-wrapper">
-                            <i class="fas fa-fingerprint"></i>
-                            <input type="text" id="filter-chassi" class="form-input filter-input" placeholder="Ex: 9BD..." autocomplete="off">
+                            <input type="text" id="filter-placa-chassi" class="form-input filter-input" placeholder="Ex: ABC1D23 ou 9BD..." autocomplete="off">
                         </div>
                     </div>
                     <div class="filter-group">
@@ -430,8 +400,7 @@
                     <table class="dashboard-table" id="manager-table">
                         <thead>
                             <tr>
-                                <th>Placa</th>
-                                <th>Chassi</th>
+                                <th>Placa/Chassi</th>
                                 <th>Concessionária Vendedora</th>
                                 <th>Consultor</th>
                                 <th style="text-align: center;">Revisões Realizadas</th>
@@ -461,12 +430,8 @@
                 <form id="edit-vehicle-form">
                     <input type="hidden" id="edit-veh-id">
                     <div class="form-group" style="margin-bottom: 14px;">
-                        <label for="edit-veh-placa">Placa</label>
-                        <input type="text" id="edit-veh-placa" class="form-input" required>
-                    </div>
-                    <div class="form-group" style="margin-bottom: 14px;">
-                        <label for="edit-veh-chassi">Chassi</label>
-                        <input type="text" id="edit-veh-chassi" class="form-input" required>
+                        <label for="edit-veh-placa-chassi">Placa/Chassi</label>
+                        <input type="text" id="edit-veh-placa-chassi" class="form-input" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 14px;">
                         <label for="edit-veh-concessionaria">Concessionária vendedora</label>
@@ -528,6 +493,10 @@
                                 <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                             </svg>
                             <span>Usuários Cadastrados</span>
+                        </button>
+                        <button type="button" id="btn-consultants-panel" class="btn-consultants-inline" style="display: none;">
+                            <i class="fas fa-user-tie"></i>
+                            <span>Cadastrar Consultor</span>
                         </button>
                     </div>
 
@@ -622,7 +591,7 @@
 
     <!-- Configuração e Arquivos de Código -->
     <script src="config.js?v=3"></script>
-    <script src="app.js?v=7"></script>
+    <script src="app.js?v=9"></script>
 </body>
 
 </html>
