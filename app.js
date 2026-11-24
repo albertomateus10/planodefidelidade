@@ -161,54 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 0. Controle da Tela de Entrada (Landing Screen)
 let isGoogleLoginInProgress = false;
-const REDIRECT_PENDING_KEY = 'sm_google_redirect_pending';
 
 function isSameOriginFirebaseHosting() {
     const host = window.location.hostname;
     const authDomain = (activeConfig.firebaseConfig && activeConfig.firebaseConfig.authDomain) || '';
-    return host === authDomain || host.endsWith('.firebaseapp.com') || host.endsWith('.web.app');
-}
-
-function showAuthInlineError(htmlMessage, includeRedirectButton = false, provider = null) {
-    const errBox = document.getElementById('auth-inline-error');
-    if (!errBox) {
-        showToast(htmlMessage, "error");
-        return;
-    }
-
-    errBox.innerHTML = '';
-    const msgSpan = document.createElement('div');
-    msgSpan.textContent = htmlMessage;
-    errBox.appendChild(msgSpan);
-
-    if (includeRedirectButton) {
-        const redirectBtn = document.createElement('button');
-        redirectBtn.type = 'button';
-        redirectBtn.className = 'auth-redirect-fallback-btn';
-        redirectBtn.textContent = 'Tentar login via redirecionamento na mesma aba';
-        redirectBtn.addEventListener('click', async () => {
-            try {
-                const authProvider = provider || new firebase.auth.GoogleAuthProvider();
-                authProvider.setCustomParameters({ prompt: 'select_account' });
-                sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
-                await firebase.auth().signInWithRedirect(authProvider);
-            } catch (err) {
-                console.error("Erro ao iniciar redirecionamento Google:", err);
-                showToast("Não foi possível redirecionar para o login Google.", "error");
-            }
-        });
-        errBox.appendChild(redirectBtn);
-    }
-
-    errBox.style.display = 'block';
-}
-
-function hideAuthInlineError() {
-    const errBox = document.getElementById('auth-inline-error');
-    if (errBox) {
-        errBox.style.display = 'none';
-        errBox.innerHTML = '';
-    }
+    return Boolean(host && authDomain && host === authDomain);
 }
 
 function showLandingLoginBox() {
@@ -244,7 +201,6 @@ function setupLandingScreen() {
             try {
                 await firebase.auth().signOut();
                 showLandingLoginBox();
-                hideAuthInlineError();
             } catch (e) {
                 console.error("Erro ao sair:", e);
             }
@@ -278,11 +234,10 @@ function setupLandingScreen() {
         }
 
         if (window.location.protocol === 'file:') {
-            showAuthInlineError("Abra o sistema via servidor (http://localhost ou URL publicada), não direto como arquivo local (file://).");
+            showToast("Abra o sistema via servidor (http://localhost ou URL publicada).", "error");
             return;
         }
 
-        hideAuthInlineError();
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -296,23 +251,15 @@ function setupLandingScreen() {
             console.error("Erro ao autenticar com o Google:", error);
 
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
-                // Em Firebase Hosting (mesma origem) o redirect funciona nativamente;
-                // em localhost/Vercel o Chrome particiona storage entre origens, então orientamos liberar pop-up.
                 if (isSameOriginFirebaseHosting()) {
                     try {
-                        sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
-                        showToast("Pop-up bloqueado. Redirecionando para o login Google...", "success");
                         await firebase.auth().signInWithRedirect(provider);
                         return;
                     } catch (redirectError) {
                         console.error("Erro no redirecionamento Google:", redirectError);
                     }
                 }
-                showAuthInlineError(
-                    "O navegador bloqueou a janela pop-up do Google. Permita pop-ups para este site na barra de endereço e clique em Entrar com Google novamente.",
-                    true,
-                    provider
-                );
+                showToast("Pop-up bloqueado pelo navegador. Permita pop-ups na barra de endereço para entrar com o Google.", "error");
             } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
                 // Usuário fechou a janela ou clicou novamente; restaura sem erro
             } else {
@@ -324,7 +271,6 @@ function setupLandingScreen() {
                 } else if (error.message) {
                     msg = error.message;
                 }
-                showAuthInlineError(msg);
                 showToast(msg, "error");
             }
         } finally {
@@ -362,6 +308,14 @@ function loadConfiguration() {
         // Prioridade 2: Variáveis definidas no config.js
         activeConfig.firebaseConfig = { ...defaultCfg };
         activeConfig.adminPin = defaultPin;
+    }
+
+    // Se estiver hospedado no próprio Firebase Hosting (.web.app / .firebaseapp.com do projeto),
+    // usa o próprio host como authDomain para manter o login mesma-origem sem bloqueio de cookies.
+    const currentHost = window.location.hostname;
+    const pid = activeConfig.firebaseConfig.projectId;
+    if (pid && (currentHost === `${pid}.web.app` || currentHost === `${pid}.firebaseapp.com`)) {
+        activeConfig.firebaseConfig.authDomain = currentHost;
     }
 
     // Se estiver vazio, exibir modal de configuração inicial
@@ -444,15 +398,14 @@ async function validateAuthenticatedUser(user, isManualCheck = false) {
         } catch (error) {
             console.error("Erro ao verificar liberação de usuário:", error);
             if (error.code === 'permission-denied') {
-                showAuthInlineError("Erro de permissão no Firestore para a coleção 'usuarios'.");
+                showToast("Erro de permissão no Firestore para a coleção 'usuarios'.", "error");
             } else {
-                showAuthInlineError("Erro de conexão ao validar sua conta: " + (error.message || error));
+                showToast("Erro de conexão ao validar sua conta.", "error");
             }
             return;
         }
     }
 
-    hideAuthInlineError();
     showLandingLoginBox();
     document.getElementById('user-email-display').textContent = user.email;
 
@@ -475,27 +428,17 @@ function setupAuthListener() {
         authListenerUnsubscribe();
     }
 
-    // Verifica retorno de redirect (caso o usuário tenha tentado via redirecionamento)
-    firebase.auth().getRedirectResult().then((result) => {
-        const hadPendingRedirect = sessionStorage.getItem(REDIRECT_PENDING_KEY) === '1';
-        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+    sessionStorage.removeItem('sm_google_redirect_pending');
 
-        if (hadPendingRedirect && (!result || !result.user) && !firebase.auth().currentUser) {
-            showAuthInlineError(
-                "O navegador bloqueou o retorno do login via redirecionamento (cookies/armazenamento de terceiros). Libere pop-ups para este site na barra de endereço e clique em Entrar com Google.",
-                false
-            );
-        }
-    }).catch((error) => {
-        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+    firebase.auth().getRedirectResult().catch((error) => {
         if (!error) return;
         console.error("Erro no retorno do login Google (redirect):", error);
         if (error.code === 'auth/unauthorized-domain') {
-            showAuthInlineError("Este domínio (" + window.location.hostname + ") não está autorizado no Console do Firebase (Authorized Domains).");
+            showToast("Este domínio (" + window.location.hostname + ") não está autorizado no Console do Firebase (Authorized Domains).", "error");
         } else if (error.code === 'auth/operation-not-allowed') {
-            showAuthInlineError("O provedor Google Sign-In está desativado no Console do Firebase.");
+            showToast("O provedor Google Sign-In está desativado no Console do Firebase.", "error");
         } else if (error.code !== 'auth/popup-closed-by-user') {
-            showAuthInlineError("Erro ao concluir login com Google: " + (error.message || error.code));
+            showToast("Erro ao concluir login com Google: " + (error.message || error.code), "error");
         }
     });
 
@@ -504,7 +447,6 @@ function setupAuthListener() {
         const mainApp = document.getElementById('main-app');
 
         if (user) {
-            sessionStorage.removeItem(REDIRECT_PENDING_KEY);
             console.log("Usuário autenticado:", user.email);
             await validateAuthenticatedUser(user, false);
         } else {

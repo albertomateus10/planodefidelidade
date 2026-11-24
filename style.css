@@ -970,36 +970,6 @@ footer {
     font-weight: 700;
 }
 
-.auth-inline-error {
-    margin-top: 14px;
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgba(239, 68, 68, 0.14);
-    border: 1px solid rgba(239, 68, 68, 0.35);
-    color: #fecaca;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.82rem;
-    line-height: 1.45;
-    text-align: left;
-}
-
-.auth-redirect-fallback-btn {
-    margin-top: 8px;
-    background: none;
-    border: none;
-    color: #93c5fd;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-decoration: underline;
-    cursor: pointer;
-    padding: 0;
-}
-
-.auth-redirect-fallback-btn:hover {
-    color: #ffffff;
-}
-
 .pending-approval-box {
     display: flex;
     flex-direction: column;
