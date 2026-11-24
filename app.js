@@ -136,7 +136,19 @@ const elements = {
     listPendingUsers: document.getElementById('list-pending-users'),
     listRegisteredUsers: document.getElementById('list-registered-users'),
     emptyPendingUsers: document.getElementById('empty-pending-users'),
-    emptyRegisteredUsers: document.getElementById('empty-registered-users')
+    emptyRegisteredUsers: document.getElementById('empty-registered-users'),
+
+    // Cadastro e Seleção de Consultores (apenas Gestor)
+    btnConsultantsPanel: document.getElementById('btn-consultants-panel'),
+    btnManageConsultants: document.getElementById('btn-manage-consultants'),
+    btnManageConsultantsEdit: document.getElementById('btn-manage-consultants-edit'),
+    consultantsModal: document.getElementById('consultants-modal'),
+    closeConsultantsModal: document.getElementById('close-consultants-modal'),
+    btnCloseConsultantsFooter: document.getElementById('btn-close-consultants-footer'),
+    consultantForm: document.getElementById('consultant-form'),
+    newConsultantName: document.getElementById('new-consultant-name'),
+    consultantsListContainer: document.getElementById('consultants-list'),
+    emptyConsultantsList: document.getElementById('empty-consultants-list')
 };
 
 // Inicialização ao carregar a página
@@ -149,145 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 0. Controle da Tela de Entrada (Landing Screen)
 function setupLandingScreen() {
-    const landingForm = document.getElementById('landing-form');
-    const nameInput = document.getElementById('landing-name-input');
-    const nameInputGroup = document.getElementById('name-input-group');
-    const emailInput = document.getElementById('landing-email-input');
-    const passwordInput = document.getElementById('landing-password-input');
-    const confirmPasswordInput = document.getElementById('landing-confirm-password-input');
-    const confirmPasswordGroup = document.getElementById('confirm-password-group');
     const googleLoginBtn = document.getElementById('google-login-btn');
-    const tabLogin = document.getElementById('tab-login');
-    const tabRegister = document.getElementById('tab-register');
-    const btnText = document.getElementById('btn-text');
-    const btnIcon = document.querySelector('#landing-btn i');
-
-    let authMode = 'login';
-
-    // Alternar para Login
-    tabLogin.addEventListener('click', () => {
-        authMode = 'login';
-        tabLogin.classList.add('active');
-        tabRegister.classList.remove('active');
-        if (nameInputGroup) nameInputGroup.style.display = 'none';
-        if (nameInput) nameInput.required = false;
-        confirmPasswordGroup.style.display = 'none';
-        confirmPasswordInput.required = false;
-        btnText.textContent = "Acessar";
-        if (btnIcon) {
-            btnIcon.className = "fas fa-sign-in-alt";
-        }
-    });
-
-    // Alternar para Cadastro
-    tabRegister.addEventListener('click', () => {
-        authMode = 'register';
-        tabRegister.classList.add('active');
-        tabLogin.classList.remove('active');
-        if (nameInputGroup) nameInputGroup.style.display = 'block';
-        if (nameInput) nameInput.required = true;
-        confirmPasswordGroup.style.display = 'block';
-        confirmPasswordInput.required = true;
-        btnText.textContent = "Cadastrar";
-        if (btnIcon) {
-            btnIcon.className = "fas fa-user-plus";
-        }
-    });
-
-    // Submissão do Formulário
-    landingForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
-        const nome = nameInput ? nameInput.value.trim() : '';
-        console.log("Formulário submetido. Modo ativo:", authMode);
-
-        if (!firebase.apps.length) {
-            showToast("Firebase não está conectado ou inicializado corretamente.", "error");
-            return;
-        }
-
-        if (authMode === 'login') {
-            // Login convencional via Firebase Auth
-            try {
-                showToast("Efetuando login...", "success");
-                await firebase.auth().signInWithEmailAndPassword(email, password);
-                showToast("Login realizado com sucesso!", "success");
-            } catch (error) {
-                console.error("Erro no login:", error);
-                let msg = "Erro ao fazer login. Verifique suas credenciais.";
-                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                    msg = "E-mail ou senha inválidos.";
-                } else if (error.code === 'auth/invalid-email') {
-                    msg = "Formato de e-mail inválido.";
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    msg = "O provedor E-mail/Senha está desativado no Console do Firebase (Authentication).";
-                } else if (error.message) {
-                    msg = error.message;
-                }
-                showToast(msg, "error");
-            }
-        } else {
-            // Cadastro convencional via Firebase Auth e Firestore
-            const confirmPassword = confirmPasswordInput.value;
-
-            // Validação de e-mail
-            if (!email.includes('@')) {
-                showToast("Por favor, insira um e-mail válido.", "error");
-                return;
-            }
-
-            // Validação de confirmação de senha
-            if (password !== confirmPassword) {
-                showToast("As senhas não coincidem.", "error");
-                return;
-            }
-
-            if (password.length < 6) {
-                showToast("A senha deve conter no mínimo 6 caracteres.", "error");
-                return;
-            }
-
-            try {
-                showToast("Criando conta no Firebase...", "success");
-                const cred = await firebase.auth().createUserWithEmailAndPassword(email, password);
-                if (cred.user) {
-                    if (nome) {
-                        await cred.user.updateProfile({ displayName: nome }).catch(console.warn);
-                    }
-                    if (db) {
-                        await db.collection('usuarios').doc(cred.user.uid).set({
-                            uid: cred.user.uid,
-                            nome: nome || formatNameFromEmail(email),
-                            email: email,
-                            cargo: 'Consultor',
-                            aprovado: false,
-                            created_at: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                    }
-                    showToast("Cadastro realizado com sucesso! Aguarde a aprovação do gestor.", "success");
-                    await firebase.auth().signOut();
-                    tabLogin.click();
-                }
-            } catch (error) {
-                console.error("Erro no cadastro:", error);
-                let msg = "Erro ao criar conta. Tente novamente.";
-                if (error.code === 'auth/email-already-in-use') {
-                    msg = "Este e-mail já está em uso.";
-                } else if (error.code === 'auth/invalid-email') {
-                    msg = "Formato de e-mail inválido.";
-                } else if (error.code === 'auth/weak-password') {
-                    msg = "A senha escolhida é muito fraca.";
-                } else if (error.code === 'auth/operation-not-allowed') {
-                    msg = "O provedor E-mail/Senha está desativado no Console do Firebase (Authentication).";
-                } else if (error.message) {
-                    msg = error.message;
-                }
-                showToast(msg, "error");
-            }
-        }
-    });
+    if (!googleLoginBtn) return;
 
     // Login com Google
     googleLoginBtn.addEventListener('click', async () => {
@@ -462,8 +337,9 @@ function setupAuthListener() {
             
             document.getElementById('user-email-display').textContent = user.email;
             
-            // Iniciar listener de novos usuários pendentes em tempo real
+            // Iniciar listener de novos usuários pendentes e consultores em tempo real
             setupPendingUsersBadgeListener();
+            setupConsultantsListener();
 
             // Transição suave para o App
             landingScreen.classList.add('hide');
@@ -480,6 +356,13 @@ function setupAuthListener() {
                 pendingUsersUnsubscribe();
                 pendingUsersUnsubscribe = null;
             }
+            if (consultantsUnsubscribe) {
+                consultantsUnsubscribe();
+                consultantsUnsubscribe = null;
+            }
+            consultantsList = [];
+            populateConsultantSelects();
+
             if (elements.badgePendingIndicator) {
                 elements.badgePendingIndicator.style.display = 'none';
             }
@@ -841,6 +724,28 @@ function setupEventListeners() {
             await saveEditedVehicle();
         });
     }
+
+    // Event Listeners de Cadastro e Gestão de Consultores (apenas Gestor)
+    [elements.btnConsultantsPanel, elements.btnManageConsultants, elements.btnManageConsultantsEdit].forEach(btn => {
+        if (btn) {
+            btn.addEventListener('click', () => openConsultantsModal());
+        }
+    });
+
+    if (elements.closeConsultantsModal) {
+        elements.closeConsultantsModal.addEventListener('click', () => hideModal(elements.consultantsModal));
+    }
+
+    if (elements.btnCloseConsultantsFooter) {
+        elements.btnCloseConsultantsFooter.addEventListener('click', () => hideModal(elements.consultantsModal));
+    }
+
+    if (elements.consultantForm) {
+        elements.consultantForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await handleConsultantCreate();
+        });
+    }
 }
 
 // Aplicar permissões visuais de acordo com o nível do usuário (Gestor vs Consultor)
@@ -857,6 +762,17 @@ function applyUserPermissions() {
         elements.btnDeleteVehicle.style.display = (gestor && currentVehicle) ? 'inline-flex' : 'none';
     }
 
+    // Botões de cadastro de consultor visíveis apenas para Gestores
+    if (elements.btnConsultantsPanel) {
+        elements.btnConsultantsPanel.style.display = gestor ? 'flex' : 'none';
+    }
+    if (elements.btnManageConsultants) {
+        elements.btnManageConsultants.style.display = gestor ? 'inline-flex' : 'none';
+    }
+    if (elements.btnManageConsultantsEdit) {
+        elements.btnManageConsultantsEdit.style.display = gestor ? 'inline-flex' : 'none';
+    }
+
     // Se o modal do relatório geral estiver aberto, re-renderiza a tabela para refletir o botão de excluir
     if (elements.managerModal && elements.managerModal.classList.contains('active')) {
         renderManagerDashboardTable(currentFilteredVehiclesList);
@@ -870,6 +786,7 @@ function openEditVehicleModal(vehicle) {
     elements.editVehPlaca.value = vehicle.placa || '';
     elements.editVehChassi.value = vehicle.chassi || '';
     elements.editVehConcessionaria.value = vehicle.concessionaria || '';
+    populateConsultantSelects(vehicle.consultor || '');
     elements.editVehConsultor.value = vehicle.consultor || '';
     showModal(elements.editVehicleModal);
 }
@@ -2105,4 +2022,233 @@ window.handleUserRoleChange = handleUserRoleChange;
 window.handleUserDelete = handleUserDelete;
 window.openUsersManagementPanel = openUsersManagementPanel;
 window.switchUsersTab = switchUsersTab;
+
+// ============================================================
+// 13. CADASTRO E SELEÇÃO DE CONSULTORES (APENAS GESTOR)
+// ============================================================
+
+let consultantsList = [];
+let consultantsUnsubscribe = null;
+
+/**
+ * Escuta em tempo real a coleção 'consultores' no Firestore
+ * e mantém os selects e o modal sincronizados.
+ */
+function setupConsultantsListener() {
+    if (!db) return;
+    if (consultantsUnsubscribe) {
+        consultantsUnsubscribe();
+    }
+
+    try {
+        consultantsUnsubscribe = db.collection('consultores').onSnapshot(snapshot => {
+            const list = [];
+            snapshot.forEach(doc => {
+                const data = doc.data() || {};
+                const nome = String(data.nome || '').trim();
+                if (nome) {
+                    list.push({ id: doc.id, nome });
+                }
+            });
+
+            list.sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR', { sensitivity: 'base' }));
+            consultantsList = list;
+            populateConsultantSelects();
+            renderConsultantsModalList();
+        }, error => {
+            console.warn("Aviso ao escutar consultores no Firestore:", error);
+        });
+    } catch (e) {
+        console.warn("Erro ao configurar listener de consultores:", e);
+    }
+}
+
+/**
+ * Preenche um elemento <select> com os consultores cadastrados.
+ */
+function fillConsultantSelect(selectEl, preserveValue) {
+    if (!selectEl) return;
+    const currentValue = preserveValue !== undefined ? preserveValue : selectEl.value;
+    const placeholder = consultantsList.length > 0
+        ? 'Selecione um consultor...'
+        : 'Nenhum consultor cadastrado';
+
+    selectEl.innerHTML = '';
+
+    const defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = placeholder;
+    selectEl.appendChild(defaultOpt);
+
+    let hasCurrentInList = false;
+    consultantsList.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.nome;
+        opt.textContent = c.nome;
+        if (currentValue && c.nome === currentValue) {
+            hasCurrentInList = true;
+        }
+        selectEl.appendChild(opt);
+    });
+
+    // Preserva nome legado caso o veículo já tenha sido cadastrado antes da lista definida
+    if (currentValue && !hasCurrentInList) {
+        const legacyOpt = document.createElement('option');
+        legacyOpt.value = currentValue;
+        legacyOpt.textContent = currentValue;
+        selectEl.appendChild(legacyOpt);
+    }
+
+    if (currentValue) {
+        selectEl.value = currentValue;
+    }
+}
+
+function populateConsultantSelects(editCurrentValue) {
+    fillConsultantSelect(elements.regConsultor);
+    fillConsultantSelect(elements.editVehConsultor, editCurrentValue);
+}
+
+function openConsultantsModal() {
+    if (!isCurrentUserGestor()) {
+        showToast("Apenas gestores podem cadastrar consultores.", "error");
+        return;
+    }
+    if (!elements.consultantsModal) return;
+
+    renderConsultantsModalList();
+    showModal(elements.consultantsModal);
+    if (elements.newConsultantName) {
+        elements.newConsultantName.value = '';
+        setTimeout(() => elements.newConsultantName.focus(), 100);
+    }
+}
+
+function renderConsultantsModalList() {
+    const listEl = elements.consultantsListContainer;
+    const emptyEl = elements.emptyConsultantsList;
+    if (!listEl || !emptyEl) return;
+
+    listEl.innerHTML = '';
+
+    if (consultantsList.length === 0) {
+        emptyEl.style.display = 'flex';
+        return;
+    }
+
+    emptyEl.style.display = 'none';
+
+    consultantsList.forEach(c => {
+        const card = document.createElement('div');
+        card.className = 'user-card-item';
+        card.style.padding = '10px 14px';
+
+        const left = document.createElement('div');
+        left.className = 'user-card-left';
+
+        const avatar = document.createElement('div');
+        avatar.className = 'user-avatar-circle';
+        avatar.style.width = '34px';
+        avatar.style.height = '34px';
+        avatar.style.fontSize = '0.88rem';
+        avatar.style.background = getAvatarColor(c.nome);
+        avatar.textContent = getUserInitials(c.nome);
+
+        const info = document.createElement('div');
+        info.className = 'user-card-info';
+        const nameDiv = document.createElement('div');
+        nameDiv.className = 'user-card-name';
+        nameDiv.textContent = c.nome;
+        info.appendChild(nameDiv);
+
+        left.appendChild(avatar);
+        left.appendChild(info);
+
+        const actions = document.createElement('div');
+        actions.className = 'user-card-actions';
+
+        const delBtn = document.createElement('button');
+        delBtn.type = 'button';
+        delBtn.className = 'btn-user-delete';
+        delBtn.title = `Excluir consultor ${c.nome}`;
+        delBtn.innerHTML = `
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="10" y1="11" x2="10" y2="17"></line>
+                <line x1="14" y1="11" x2="14" y2="17"></line>
+            </svg>
+        `;
+        delBtn.addEventListener('click', () => handleConsultantDelete(c.id, c.nome));
+
+        actions.appendChild(delBtn);
+        card.appendChild(left);
+        card.appendChild(actions);
+        listEl.appendChild(card);
+    });
+}
+
+async function handleConsultantCreate() {
+    if (!isCurrentUserGestor()) {
+        showToast("Apenas gestores podem cadastrar consultores.", "error");
+        return;
+    }
+    if (!db) {
+        showToast("Banco de dados Firebase não inicializado.", "error");
+        return;
+    }
+
+    const rawName = elements.newConsultantName ? elements.newConsultantName.value : '';
+    const nome = rawName.replace(/\s+/g, ' ').trim();
+
+    if (!nome) {
+        showToast("Informe o nome do consultor.", "error");
+        return;
+    }
+
+    const duplicate = consultantsList.some(
+        c => c.nome.localeCompare(nome, 'pt-BR', { sensitivity: 'base' }) === 0
+    );
+    if (duplicate) {
+        showToast("Este consultor já está cadastrado.", "error");
+        return;
+    }
+
+    try {
+        const user = firebase.auth().currentUser;
+        await db.collection('consultores').add({
+            nome,
+            created_at: firebase.firestore.FieldValue.serverTimestamp(),
+            created_by: user ? user.email : ''
+        });
+
+        if (elements.newConsultantName) {
+            elements.newConsultantName.value = '';
+            elements.newConsultantName.focus();
+        }
+        showToast(`Consultor "${nome}" cadastrado com sucesso!`, "success");
+    } catch (error) {
+        console.error("Erro ao cadastrar consultor:", error);
+        showToast("Erro ao cadastrar consultor no Firebase.", "error");
+    }
+}
+
+async function handleConsultantDelete(id, nome) {
+    if (!isCurrentUserGestor()) {
+        showToast("Apenas gestores podem excluir consultores.", "error");
+        return;
+    }
+    if (!db || !id) return;
+
+    const confirmed = confirm(`Deseja excluir o consultor "${nome}" da lista de seleção?`);
+    if (!confirmed) return;
+
+    try {
+        await db.collection('consultores').doc(id).delete();
+        showToast(`Consultor "${nome}" removido.`, "info");
+    } catch (error) {
+        console.error("Erro ao excluir consultor:", error);
+        showToast("Erro ao excluir consultor.", "error");
+    }
+}
 

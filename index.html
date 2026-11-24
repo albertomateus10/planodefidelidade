@@ -29,64 +29,13 @@
             <div class="landing-overlay"></div>
         </div>
 
-        <!-- Lado Direito (Login / Cadastro) -->
+        <!-- Lado Direito (Login com Google) -->
         <div class="landing-login-panel">
             <!-- Card de Autenticação -->
             <div class="landing-login-card">
-                <!-- Abas de Alternância -->
-                <div class="auth-tabs">
-                    <button id="tab-login" class="auth-tab active">Entrar</button>
-                    <button id="tab-register" class="auth-tab">Cadastrar</button>
-                </div>
-
-                <form id="landing-form" class="landing-form" novalidate>
-                    <div class="landing-input-group" id="name-input-group" style="display: none;">
-                        <input
-                            type="text"
-                            id="landing-name-input"
-                            class="landing-input"
-                            placeholder="Nome Completo"
-                            autocomplete="name"
-                        >
-                    </div>
-                    <div class="landing-input-group">
-                        <input
-                            type="email"
-                            id="landing-email-input"
-                            class="landing-input"
-                            placeholder="E-mail"
-                            required
-                            autocomplete="email"
-                        >
-                    </div>
-                    <div class="landing-input-group">
-                        <input
-                            type="password"
-                            id="landing-password-input"
-                            class="landing-input"
-                            placeholder="Senha"
-                            required
-                            autocomplete="current-password"
-                        >
-                    </div>
-                    <div class="landing-input-group" id="confirm-password-group" style="display: none;">
-                        <input
-                            type="password"
-                            id="landing-confirm-password-input"
-                            class="landing-input"
-                            placeholder="Confirmar Senha"
-                            autocomplete="new-password"
-                        >
-                    </div>
-                    <button type="submit" class="landing-btn" id="landing-btn">
-                        <i class="fas fa-sign-in-alt"></i>
-                        <span id="btn-text">Acessar</span>
-                    </button>
-                </form>
-
-                <!-- Divisor OU -->
-                <div class="auth-divider">
-                    <span>ou</span>
+                <div class="google-login-header">
+                    <h2 class="google-login-title">Acesso ao Sistema</h2>
+                    <p class="google-login-subtitle">Entre com sua conta Google corporativa para continuar.</p>
                 </div>
 
                 <!-- Botão do Google -->
@@ -113,10 +62,16 @@
                 </button>
 
                 <!-- Botão Painel de Aprovação e Gestão de Usuários -->
-                <button id="btn-users-panel" class="btn-premium btn-users-dashboard" style="margin-bottom: 10px; background: linear-gradient(135deg, #0f172a, #1e293b); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); position: relative;">
+                <button id="btn-users-panel" class="btn-premium btn-users-dashboard" style="margin-bottom: 6px; background: linear-gradient(135deg, #0f172a, #1e293b); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25); position: relative;">
                     <i class="fas fa-user-shield" style="color: #ef4444;"></i>
                     <span>Gestão de Usuários</span>
                     <span id="badge-pending-indicator" class="users-pending-badge" style="display: none;">0</span>
+                </button>
+
+                <!-- Botão Cadastrar Consultores (Apenas Gestor) -->
+                <button id="btn-consultants-panel" class="btn-premium btn-consultants-dashboard" style="display: none; margin-bottom: 10px; background: linear-gradient(135deg, #1e293b, #334155); box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);">
+                    <i class="fas fa-user-tie" style="color: #10ac84;"></i>
+                    <span>Cadastrar Consultor</span>
                 </button>
 
                 <!-- Menu do Usuário Logado -->
@@ -140,16 +95,17 @@
                         Buscar Veículo
                     </h3>
                     <form id="search-form">
-                        <div class="form-group" style="position: relative;">
+                        <div class="form-group search-form-group" style="position: relative; margin-bottom: 0;">
                             <label for="search-input">Placa ou chassi</label>
-                            <input type="text" id="search-input" class="form-input" required autocomplete="off">
+                            <div class="search-input-row">
+                                <input type="text" id="search-input" class="form-input" required autocomplete="off">
+                                <button type="submit" class="btn-search-icon" title="Buscar veículo" aria-label="Buscar veículo">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
                             <!-- Dropdown de Sugestões (Autocomplete) -->
                             <div id="search-suggestions" class="autocomplete-dropdown"></div>
                         </div>
-                        <button type="submit" class="btn-premium">
-                            <i class="fas fa-search"></i>
-                            Buscar
-                        </button>
                     </form>
 
                     <!-- Detalhes do Veículo Encontrado (oculto por padrão) -->
@@ -220,7 +176,14 @@
                         </div>
                         <div class="form-group">
                             <label for="reg-consultor">Consultor</label>
-                            <input type="text" id="reg-consultor" class="form-input" required>
+                            <div class="consultor-select-row">
+                                <select id="reg-consultor" class="form-input consultor-select" required>
+                                    <option value="">Selecione um consultor...</option>
+                                </select>
+                                <button type="button" id="btn-manage-consultants" class="btn-add-consultant" style="display: none;" title="Cadastrar consultor" aria-label="Cadastrar consultor">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
                         </div>
     
                         <button type="submit" class="btn-premium btn-secondary">
@@ -475,7 +438,14 @@
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label for="edit-veh-consultor">Consultor</label>
-                        <input type="text" id="edit-veh-consultor" class="form-input" required>
+                        <div class="consultor-select-row">
+                            <select id="edit-veh-consultor" class="form-input consultor-select" required>
+                                <option value="">Selecione um consultor...</option>
+                            </select>
+                            <button type="button" id="btn-manage-consultants-edit" class="btn-add-consultant" style="display: none;" title="Cadastrar consultor" aria-label="Cadastrar consultor">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
                     </div>
                     <div style="display: flex; gap: 10px; justify-content: flex-end;">
                         <button type="button" id="cancel-edit-vehicle" class="btn-users-close-footer">Cancelar</button>
@@ -559,6 +529,41 @@
                 <!-- Rodapé do Modal com Botão Fechar -->
                 <div class="users-modal-footer">
                     <button class="btn-users-close-footer" id="btn-close-users-footer">Fechar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL: Cadastro de Consultores (Apenas Gestor) -->
+        <div class="modal-overlay" id="consultants-modal">
+            <div class="modal-content users-modal-content" style="max-width: 520px;">
+                <div class="users-modal-header">
+                    <div class="users-modal-title-group">
+                        <i class="fas fa-user-tie" style="color: #10ac84; font-size: 1.25rem;"></i>
+                        <h3 class="users-modal-title">Cadastro de Consultores</h3>
+                    </div>
+                    <button class="users-modal-close-x" id="close-consultants-modal" title="Fechar">&times;</button>
+                </div>
+
+                <div class="users-modal-body">
+                    <form id="consultant-form" class="consultant-form-row">
+                        <input type="text" id="new-consultant-name" class="form-input" placeholder="Nome completo do consultor" required autocomplete="off">
+                        <button type="submit" class="btn-premium btn-consultant-submit">
+                            <i class="fas fa-plus"></i>
+                            Cadastrar
+                        </button>
+                    </form>
+
+                    <div class="users-list-container" id="consultants-list" style="max-height: 300px;">
+                        <!-- Inserido dinamicamente via Firestore -->
+                    </div>
+                    <div class="users-empty-state" id="empty-consultants-list" style="display: none; padding: 35px 20px;">
+                        <i class="fas fa-user-tie" style="font-size: 2rem; color: #cbd5e1;"></i>
+                        <p>Nenhum consultor cadastrado ainda.</p>
+                    </div>
+                </div>
+
+                <div class="users-modal-footer">
+                    <button type="button" class="btn-users-close-footer" id="btn-close-consultants-footer">Fechar</button>
                 </div>
             </div>
         </div>

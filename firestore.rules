@@ -12,5 +12,10 @@ service cloud.firestore {
     match /usuarios/{userId} {
       allow read, write: if true;
     }
+
+    // Permite leitura e escrita para a coleção 'consultores'
+    match /consultores/{consultorId} {
+      allow read, write: if true;
+    }
   }
 }

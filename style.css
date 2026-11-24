@@ -482,6 +482,100 @@ main {
     transform: translateY(0);
 }
 
+.search-input-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.search-input-row .form-input {
+    flex: 1;
+    min-width: 0;
+}
+
+.btn-search-icon {
+    flex-shrink: 0;
+    width: 38px;
+    background: linear-gradient(135deg, var(--brand-green), #00d2d3);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16, 172, 132, 0.25);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition-smooth);
+}
+
+.btn-search-icon:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(16, 172, 132, 0.38);
+    filter: brightness(1.05);
+}
+
+.btn-search-icon:active {
+    transform: translateY(0);
+}
+
+/* Campo de seleção de Consultor com botão de cadastro (apenas Gestor) */
+.consultor-select-row {
+    display: flex;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.consultor-select {
+    flex: 1;
+    min-width: 0;
+    cursor: pointer;
+    background-color: rgba(255, 255, 255, 0.85);
+}
+
+.btn-add-consultant {
+    flex-shrink: 0;
+    width: 36px;
+    background: linear-gradient(135deg, #0f172a, #1e293b);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    transition: var(--transition-smooth);
+}
+
+.btn-add-consultant:hover {
+    background: linear-gradient(135deg, var(--brand-green), #00d2d3);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(16, 172, 132, 0.3);
+}
+
+.consultant-form-row {
+    display: flex;
+    gap: 10px;
+    align-items: stretch;
+    margin-bottom: 18px;
+}
+
+.consultant-form-row .form-input {
+    flex: 1;
+    min-width: 0;
+    padding: 11px 14px;
+    font-size: 0.92rem;
+}
+
+.btn-consultant-submit {
+    width: auto !important;
+    padding: 0 18px !important;
+    font-size: 0.85rem !important;
+    flex-shrink: 0;
+}
+
 .btn-secondary {
     background: transparent;
     border: 2px solid var(--text-dark);
@@ -827,7 +921,7 @@ footer {
     -webkit-backdrop-filter: blur(20px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 24px;
-    padding: 35px 28px 28px 28px;
+    padding: 32px 28px;
     box-shadow:
         0 15px 35px rgba(0, 0, 0, 0.4),
         inset 0 1px 0 rgba(255,255,255,0.05);
@@ -839,88 +933,26 @@ footer {
     to   { opacity: 1; transform: translateY(0)  scale(1); }
 }
 
-
-
-/* Formulário */
-.landing-form {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+.google-login-header {
+    text-align: center;
+    margin-bottom: 24px;
 }
 
-.landing-input-group {
-    position: relative;
-}
-
-.landing-input-group i {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    transform: translateY(-50%);
-    color: rgba(255,255,255,0.6);
-    font-size: 1rem;
-    pointer-events: none;
-    transition: color 0.2s;
-}
-
-.landing-input {
-    width: 100%;
-    padding: 13px 16px;
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    color: #fff;
-    font-family: 'Outfit', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.landing-input::placeholder {
-    color: rgba(255,255,255,0.45);
-}
-
-.landing-input:focus {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #ee5253;
-    box-shadow: 0 0 0 3px rgba(238, 82, 83, 0.25);
-}
-
-.landing-input:focus + i {
-    color: #ee5253;
-}
-
-/* Botão principal */
-.landing-btn {
-    width: 100%;
-    padding: 13px;
-    background: linear-gradient(135deg, #ee5253, #c0392b);
-    color: #fff;
-    border: none;
-    border-radius: 12px;
+.google-login-title {
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    font-size: 0.95rem;
+    font-size: 1.05rem;
     text-transform: uppercase;
     letter-spacing: 1px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    box-shadow: 0 6px 20px rgba(238, 82, 83, 0.4);
-    transition: all 0.3s ease;
+    color: #ffffff;
+    margin-bottom: 8px;
 }
 
-.landing-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 10px 25px rgba(238, 82, 83, 0.5);
-    filter: brightness(1.08);
-}
-
-.landing-btn:active {
-    transform: translateY(0);
+.google-login-subtitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.65);
 }
 
 /* Link "entrar sem buscar" */
@@ -997,67 +1029,6 @@ footer {
 /* ============================================================
    ESTILOS DE AUTENTICAÇÃO E MENU DO USUÁRIO
    ============================================================ */
-
-/* Abas de Autenticação */
-.auth-tabs {
-    display: flex;
-    margin-bottom: 25px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-    gap: 10px;
-}
-
-.auth-tab {
-    flex: 1;
-    background: none;
-    border: none;
-    padding: 12px 0;
-    color: rgba(255, 255, 255, 0.5);
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 0.9rem;
-    cursor: pointer;
-    border-bottom: 3px solid transparent;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.auth-tab:hover {
-    color: #fff;
-}
-
-.auth-tab.active {
-    color: #ee5253;
-    border-bottom-color: #ee5253;
-}
-
-/* Divisor */
-.auth-divider {
-    display: flex;
-    align-items: center;
-    text-align: center;
-    margin: 20px 0;
-    color: rgba(255, 255, 255, 0.35);
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.auth-divider::before,
-.auth-divider::after {
-    content: '';
-    flex: 1;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.15);
-}
-
-.auth-divider:not(:empty)::before {
-    margin-right: .5em;
-}
-
-.auth-divider:not(:empty)::after {
-    margin-left: .5em;
-}
 
 /* Botão Google */
 .google-btn {
