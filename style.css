@@ -861,11 +861,11 @@ footer {
     transform: scale(1.03);
 }
 
-/* Painel de Arte (Esquerda) - 75% */
+/* Painel de Arte (Esquerda) */
 .landing-art-panel {
     position: relative;
-    flex: 0 0 75%;
-    width: 75%;
+    flex: 1;
+    min-width: 0;
     height: 100%;
     overflow: hidden;
     z-index: 1;
@@ -895,19 +895,19 @@ footer {
     z-index: 1;
 }
 
-/* Painel de Login (Direita) - 25% */
+/* Painel de Login (Direita) */
 .landing-login-panel {
-    flex: 0 0 25%;
-    width: 25%;
+    flex: 0 0 clamp(350px, 30vw, 430px);
+    width: clamp(350px, 30vw, 430px);
     height: 100%;
-    background: #0d1117; /* Fundo escuro premium, condizente com o tema San Marino */
+    background: radial-gradient(circle at center, #1F3A5F 0%, #0F172A 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 30px 24px;
+    padding: 28px 24px;
     z-index: 2;
     border-left: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.35);
+    box-shadow: -10px 0 30px rgba(0, 0, 0, 0.45);
 }
 
 /* Card de Login */
@@ -915,16 +915,15 @@ footer {
     position: relative;
     z-index: 2;
     width: 100%;
-    max-width: 320px;
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    max-width: 360px;
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.07);
     border-radius: 24px;
-    padding: 32px 28px;
-    box-shadow:
-        0 15px 35px rgba(0, 0, 0, 0.4),
-        inset 0 1px 0 rgba(255,255,255,0.05);
+    padding: 44px 32px 34px;
+    text-align: center;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     animation: cardSlideIn 0.7s cubic-bezier(0.25, 0.8, 0.25, 1) both;
 }
 
@@ -933,26 +932,42 @@ footer {
     to   { opacity: 1; transform: translateY(0)  scale(1); }
 }
 
-.google-login-header {
+.login-logo {
+    width: 100%;
+    max-width: 240px;
+    margin: 0 auto 24px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-logo img {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+.login-welcome-text {
+    color: rgba(255, 255, 255, 0.65);
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 600;
     text-align: center;
     margin-bottom: 24px;
+    line-height: 1.35;
 }
 
-.google-login-title {
-    font-family: 'Montserrat', sans-serif;
-    font-weight: 700;
-    font-size: 1.05rem;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #ffffff;
-    margin-bottom: 8px;
-}
-
-.google-login-subtitle {
+.login-footer {
+    margin-top: 26px;
     font-family: 'Outfit', sans-serif;
-    font-size: 0.88rem;
-    line-height: 1.45;
-    color: rgba(255, 255, 255, 0.65);
+    font-size: 0.78rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.login-footer strong {
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 700;
 }
 
 /* Link "entrar sem buscar" */
@@ -1003,6 +1018,7 @@ footer {
     .landing-login-panel {
         position: absolute;
         inset: 0;
+        flex: none;
         width: 100%;
         height: 100%;
         background: transparent;
@@ -1016,13 +1032,13 @@ footer {
     }
 
     .landing-login-card {
-        max-width: 320px;
-        background: rgba(15, 19, 26, 0.82); /* Fundo mais escuro para legibilidade no mobile */
-        backdrop-filter: blur(20px) saturate(180%);
-        -webkit-backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        padding: 32px 24px;
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+        max-width: 360px;
+        background: radial-gradient(circle at center, rgba(31, 58, 95, 0.95) 0%, rgba(15, 23, 42, 0.97) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 38px 26px 30px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.55);
     }
 }
 
@@ -1033,32 +1049,34 @@ footer {
 /* Botão Google */
 .google-btn {
     width: 100%;
-    padding: 12px;
+    padding: 13px 18px;
     background: #ffffff;
-    color: #1e272e;
+    color: #1F2937;
     border: none;
     border-radius: 12px;
     font-family: 'Outfit', sans-serif;
-    font-weight: 700;
+    font-weight: 600;
     font-size: 0.95rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.25s ease;
 }
 
 .google-btn:hover {
-    background: #f8f9fa;
+    background: #f3f4f6;
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.22);
 }
 
-.google-btn img {
-    width: 18px;
-    height: 18px;
+.google-btn img,
+.google-btn .google-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 /* Menu de Usuário na Barra Lateral */
