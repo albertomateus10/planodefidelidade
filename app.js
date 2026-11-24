@@ -161,12 +161,114 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // 0. Controle da Tela de Entrada (Landing Screen)
 let isGoogleLoginInProgress = false;
+const REDIRECT_PENDING_KEY = 'sm_google_redirect_pending';
+
+function isSameOriginFirebaseHosting() {
+    const host = window.location.hostname;
+    const authDomain = (activeConfig.firebaseConfig && activeConfig.firebaseConfig.authDomain) || '';
+    return host === authDomain || host.endsWith('.firebaseapp.com') || host.endsWith('.web.app');
+}
+
+function showAuthInlineError(htmlMessage, includeRedirectButton = false, provider = null) {
+    const errBox = document.getElementById('auth-inline-error');
+    if (!errBox) {
+        showToast(htmlMessage, "error");
+        return;
+    }
+
+    errBox.innerHTML = '';
+    const msgSpan = document.createElement('div');
+    msgSpan.textContent = htmlMessage;
+    errBox.appendChild(msgSpan);
+
+    if (includeRedirectButton) {
+        const redirectBtn = document.createElement('button');
+        redirectBtn.type = 'button';
+        redirectBtn.className = 'auth-redirect-fallback-btn';
+        redirectBtn.textContent = 'Tentar login via redirecionamento na mesma aba';
+        redirectBtn.addEventListener('click', async () => {
+            try {
+                const authProvider = provider || new firebase.auth.GoogleAuthProvider();
+                authProvider.setCustomParameters({ prompt: 'select_account' });
+                sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
+                await firebase.auth().signInWithRedirect(authProvider);
+            } catch (err) {
+                console.error("Erro ao iniciar redirecionamento Google:", err);
+                showToast("Não foi possível redirecionar para o login Google.", "error");
+            }
+        });
+        errBox.appendChild(redirectBtn);
+    }
+
+    errBox.style.display = 'block';
+}
+
+function hideAuthInlineError() {
+    const errBox = document.getElementById('auth-inline-error');
+    if (errBox) {
+        errBox.style.display = 'none';
+        errBox.innerHTML = '';
+    }
+}
+
+function showLandingLoginBox() {
+    const loginBox = document.getElementById('login-auth-box');
+    const pendingBox = document.getElementById('pending-approval-box');
+    if (loginBox) loginBox.style.display = 'block';
+    if (pendingBox) pendingBox.style.display = 'none';
+}
+
+function showLandingPendingBox(user, nome) {
+    const loginBox = document.getElementById('login-auth-box');
+    const pendingBox = document.getElementById('pending-approval-box');
+    const nameEl = document.getElementById('pending-user-name');
+    const emailEl = document.getElementById('pending-user-email');
+    const photoEl = document.getElementById('pending-user-photo');
+
+    if (nameEl) nameEl.textContent = nome || user.displayName || 'Usuário';
+    if (emailEl) emailEl.textContent = user.email || '';
+    if (photoEl) {
+        photoEl.src = user.photoURL || 'logobranca.png';
+    }
+    if (loginBox) loginBox.style.display = 'none';
+    if (pendingBox) pendingBox.style.display = 'flex';
+}
 
 function setupLandingScreen() {
     const googleLoginBtn = document.getElementById('google-login-btn');
+    const btnPendingLogout = document.getElementById('btn-pending-logout');
+    const btnCheckApproval = document.getElementById('btn-check-approval');
+
+    if (btnPendingLogout) {
+        btnPendingLogout.addEventListener('click', async () => {
+            try {
+                await firebase.auth().signOut();
+                showLandingLoginBox();
+                hideAuthInlineError();
+            } catch (e) {
+                console.error("Erro ao sair:", e);
+            }
+        });
+    }
+
+    if (btnCheckApproval) {
+        btnCheckApproval.addEventListener('click', async () => {
+            const user = firebase.auth().currentUser;
+            if (!user) {
+                showLandingLoginBox();
+                return;
+            }
+            btnCheckApproval.disabled = true;
+            try {
+                await validateAuthenticatedUser(user, true);
+            } finally {
+                btnCheckApproval.disabled = false;
+            }
+        });
+    }
+
     if (!googleLoginBtn) return;
 
-    // Login com Google (tenta popup primeiro na ação direta do usuário e faz fallback para redirect se bloqueado)
     googleLoginBtn.addEventListener('click', async () => {
         if (isGoogleLoginInProgress) return;
 
@@ -175,6 +277,12 @@ function setupLandingScreen() {
             return;
         }
 
+        if (window.location.protocol === 'file:') {
+            showAuthInlineError("Abra o sistema via servidor (http://localhost ou URL publicada), não direto como arquivo local (file://).");
+            return;
+        }
+
+        hideAuthInlineError();
         const provider = new firebase.auth.GoogleAuthProvider();
         provider.setCustomParameters({ prompt: 'select_account' });
 
@@ -182,33 +290,41 @@ function setupLandingScreen() {
         googleLoginBtn.disabled = true;
 
         try {
-            // Chama signInWithPopup imediatamente no gesto de clique para evitar bloqueio pelo navegador
-            const authPromise = firebase.auth().signInWithPopup(provider);
-            showToast("Conectando com o Google...", "success");
-            await authPromise;
+            // Chama signInWithPopup imediatamente no clique para manter a ativação do usuário intacta
+            await firebase.auth().signInWithPopup(provider);
         } catch (error) {
             console.error("Erro ao autenticar com o Google:", error);
 
             if (error.code === 'auth/popup-blocked' || error.code === 'auth/operation-not-supported-in-this-environment') {
-                try {
-                    showToast("Pop-up bloqueado pelo navegador. Redirecionando para o login Google...", "success");
-                    await firebase.auth().signInWithRedirect(provider);
-                    return;
-                } catch (redirectError) {
-                    console.error("Erro no redirecionamento Google:", redirectError);
-                    showToast("Não foi possível abrir o login do Google. Verifique o bloqueador de pop-ups.", "error");
+                // Em Firebase Hosting (mesma origem) o redirect funciona nativamente;
+                // em localhost/Vercel o Chrome particiona storage entre origens, então orientamos liberar pop-up.
+                if (isSameOriginFirebaseHosting()) {
+                    try {
+                        sessionStorage.setItem(REDIRECT_PENDING_KEY, '1');
+                        showToast("Pop-up bloqueado. Redirecionando para o login Google...", "success");
+                        await firebase.auth().signInWithRedirect(provider);
+                        return;
+                    } catch (redirectError) {
+                        console.error("Erro no redirecionamento Google:", redirectError);
+                    }
                 }
+                showAuthInlineError(
+                    "O navegador bloqueou a janela pop-up do Google. Permita pop-ups para este site na barra de endereço e clique em Entrar com Google novamente.",
+                    true,
+                    provider
+                );
             } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-                // Usuário fechou a janela ou clicou novamente; apenas restaura o botão
+                // Usuário fechou a janela ou clicou novamente; restaura sem erro
             } else {
                 let msg = "Erro ao autenticar com o Google. Tente novamente.";
                 if (error.code === 'auth/operation-not-allowed') {
                     msg = "O provedor Google Sign-In está desativado no Console do Firebase (Authentication).";
                 } else if (error.code === 'auth/unauthorized-domain') {
-                    msg = "Este domínio não está autorizado no Console do Firebase (Authorized Domains). Adicione-o.";
+                    msg = "Este domínio (" + window.location.hostname + ") não está autorizado no Console do Firebase (Authorized Domains).";
                 } else if (error.message) {
                     msg = error.message;
                 }
+                showAuthInlineError(msg);
                 showToast(msg, "error");
             }
         } finally {
@@ -220,7 +336,10 @@ function setupLandingScreen() {
 
 // 1. Carregamento das Configurações (config.js ou localStorage)
 function loadConfiguration() {
-    // Prioridade 1: LocalStorage (configurações salvas pela UI)
+    const defaultCfg = (typeof CONFIG !== 'undefined' && CONFIG.FIREBASE_CONFIG) ? CONFIG.FIREBASE_CONFIG : {};
+    const defaultPin = (typeof CONFIG !== 'undefined' && CONFIG.ADMIN_PIN) ? CONFIG.ADMIN_PIN : "1234";
+
+    // Prioridade 1: LocalStorage (configurações salvas pela UI), usando config.js como fallback por campo
     const localApiKey = localStorage.getItem('sm_fb_apiKey');
     const localAuthDomain = localStorage.getItem('sm_fb_authDomain');
     const localProjectId = localStorage.getItem('sm_fb_projectId');
@@ -232,17 +351,17 @@ function loadConfiguration() {
     if (localApiKey && localProjectId) {
         activeConfig.firebaseConfig = {
             apiKey: localApiKey,
-            authDomain: localAuthDomain || "",
+            authDomain: localAuthDomain || defaultCfg.authDomain || `${localProjectId}.firebaseapp.com`,
             projectId: localProjectId,
-            storageBucket: localStorageBucket || "",
-            messagingSenderId: localMessagingSenderId || "",
-            appId: localAppId || ""
+            storageBucket: localStorageBucket || defaultCfg.storageBucket || "",
+            messagingSenderId: localMessagingSenderId || defaultCfg.messagingSenderId || "",
+            appId: localAppId || defaultCfg.appId || ""
         };
-        activeConfig.adminPin = localPin || "1234";
-    } else if (typeof CONFIG !== 'undefined' && CONFIG.FIREBASE_CONFIG) {
+        activeConfig.adminPin = localPin || defaultPin;
+    } else if (defaultCfg.apiKey) {
         // Prioridade 2: Variáveis definidas no config.js
-        activeConfig.firebaseConfig = { ...CONFIG.FIREBASE_CONFIG };
-        activeConfig.adminPin = CONFIG.ADMIN_PIN || "1234";
+        activeConfig.firebaseConfig = { ...defaultCfg };
+        activeConfig.adminPin = defaultPin;
     }
 
     // Se estiver vazio, exibir modal de configuração inicial
@@ -280,90 +399,114 @@ function initFirebase() {
     }
 }
 
+async function validateAuthenticatedUser(user, isManualCheck = false) {
+    const landingScreen = document.getElementById('landing-screen');
+    const mainApp = document.getElementById('main-app');
+
+    if (!user) return;
+
+    if (db) {
+        try {
+            const userDoc = await db.collection('usuarios').doc(user.uid).get();
+            if (!userDoc.exists) {
+                const nome = user.displayName || formatNameFromEmail(user.email);
+                await db.collection('usuarios').doc(user.uid).set({
+                    uid: user.uid,
+                    nome,
+                    email: user.email,
+                    cargo: 'Consultor',
+                    aprovado: false,
+                    fotoUrl: user.photoURL || '',
+                    created_at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                mainApp.style.display = 'none';
+                landingScreen.style.display = 'flex';
+                landingScreen.classList.remove('hide');
+                showLandingPendingBox(user, nome);
+                showToast("Cadastro realizado! Aguarde a liberação de um Gestor.", "success");
+                return;
+            }
+
+            const userData = userDoc.data();
+            if (!userData.aprovado) {
+                mainApp.style.display = 'none';
+                landingScreen.style.display = 'flex';
+                landingScreen.classList.remove('hide');
+                showLandingPendingBox(user, userData.nome);
+                if (isManualCheck) {
+                    showToast("Seu cadastro ainda está aguardando aprovação do Gestor.", "error");
+                }
+                return;
+            }
+
+            currentUserRole = normalizeUserRole(userData.cargo);
+            applyUserPermissions();
+        } catch (error) {
+            console.error("Erro ao verificar liberação de usuário:", error);
+            if (error.code === 'permission-denied') {
+                showAuthInlineError("Erro de permissão no Firestore para a coleção 'usuarios'.");
+            } else {
+                showAuthInlineError("Erro de conexão ao validar sua conta: " + (error.message || error));
+            }
+            return;
+        }
+    }
+
+    hideAuthInlineError();
+    showLandingLoginBox();
+    document.getElementById('user-email-display').textContent = user.email;
+
+    // Iniciar listener de novos usuários pendentes e consultores em tempo real
+    setupPendingUsersBadgeListener();
+    setupConsultantsListener();
+
+    // Transição suave para o App
+    landingScreen.classList.add('hide');
+    setTimeout(() => {
+        landingScreen.style.display = 'none';
+        mainApp.style.display = 'block';
+        document.body.style.overflow = '';
+    }, 600);
+}
+
 let authListenerUnsubscribe = null;
 function setupAuthListener() {
     if (authListenerUnsubscribe) {
         authListenerUnsubscribe();
     }
 
-    // Captura erros ao retornar de eventual login via redirect (fallback de pop-up)
-    firebase.auth().getRedirectResult().catch((error) => {
+    // Verifica retorno de redirect (caso o usuário tenha tentado via redirecionamento)
+    firebase.auth().getRedirectResult().then((result) => {
+        const hadPendingRedirect = sessionStorage.getItem(REDIRECT_PENDING_KEY) === '1';
+        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
+
+        if (hadPendingRedirect && (!result || !result.user) && !firebase.auth().currentUser) {
+            showAuthInlineError(
+                "O navegador bloqueou o retorno do login via redirecionamento (cookies/armazenamento de terceiros). Libere pop-ups para este site na barra de endereço e clique em Entrar com Google.",
+                false
+            );
+        }
+    }).catch((error) => {
+        sessionStorage.removeItem(REDIRECT_PENDING_KEY);
         if (!error) return;
         console.error("Erro no retorno do login Google (redirect):", error);
         if (error.code === 'auth/unauthorized-domain') {
-            showToast("Este domínio não está autorizado no Console do Firebase (Authorized Domains).", "error");
+            showAuthInlineError("Este domínio (" + window.location.hostname + ") não está autorizado no Console do Firebase (Authorized Domains).");
         } else if (error.code === 'auth/operation-not-allowed') {
-            showToast("O provedor Google Sign-In está desativado no Console do Firebase.", "error");
+            showAuthInlineError("O provedor Google Sign-In está desativado no Console do Firebase.");
         } else if (error.code !== 'auth/popup-closed-by-user') {
-            showToast("Erro ao concluir login com Google: " + (error.message || error.code), "error");
+            showAuthInlineError("Erro ao concluir login com Google: " + (error.message || error.code));
         }
     });
 
     authListenerUnsubscribe = firebase.auth().onAuthStateChanged(async (user) => {
         const landingScreen = document.getElementById('landing-screen');
         const mainApp = document.getElementById('main-app');
-        
+
         if (user) {
+            sessionStorage.removeItem(REDIRECT_PENDING_KEY);
             console.log("Usuário autenticado:", user.email);
-            
-            // Verificar se o usuário está liberado no banco de dados
-            if (db) {
-                try {
-                    console.log("Verificando documento do usuário no Firestore para o UID:", user.uid);
-                    const userDoc = await db.collection('usuarios').doc(user.uid).get();
-                    if (!userDoc.exists) {
-                        console.log("Documento não existe. Criando novo usuário pendente no Firestore...");
-                        // Novo cadastro ou usuário sem registro no Firestore
-                        await db.collection('usuarios').doc(user.uid).set({
-                            uid: user.uid,
-                            nome: user.displayName || formatNameFromEmail(user.email),
-                            email: user.email,
-                            cargo: 'Consultor',
-                            aprovado: false,
-                            fotoUrl: user.photoURL || '',
-                            created_at: firebase.firestore.FieldValue.serverTimestamp()
-                        });
-                        console.log("Documento de usuário pendente criado com sucesso no Firestore.");
-                        showToast("Cadastro realizado! Aguardando liberação do administrador.", "success");
-                        await firebase.auth().signOut();
-                        return;
-                    }
-                    
-                    const userData = userDoc.data();
-                    console.log("Documento encontrado no Firestore. Status aprovado:", userData.aprovado);
-                    if (!userData.aprovado) {
-                        showToast("Sua conta está aguardando liberação do administrador.", "error");
-                        await firebase.auth().signOut();
-                        return;
-                    }
-
-                    currentUserRole = normalizeUserRole(userData.cargo);
-                    applyUserPermissions();
-                } catch (error) {
-                    console.error("Erro ao verificar liberação de usuário:", error);
-                    if (error.code === 'permission-denied') {
-                        showToast("Erro de permissão no Firebase. Configure as Regras do Firestore para a coleção 'usuarios'.", "error");
-                    } else {
-                        showToast("Erro de conexão ao validar sua conta.", "error");
-                    }
-                    await firebase.auth().signOut();
-                    return;
-                }
-            }
-            
-            document.getElementById('user-email-display').textContent = user.email;
-            
-            // Iniciar listener de novos usuários pendentes e consultores em tempo real
-            setupPendingUsersBadgeListener();
-            setupConsultantsListener();
-
-            // Transição suave para o App
-            landingScreen.classList.add('hide');
-            setTimeout(() => {
-                landingScreen.style.display = 'none';
-                mainApp.style.display = 'block';
-                document.body.style.overflow = '';
-            }, 600);
+            await validateAuthenticatedUser(user, false);
         } else {
             console.log("Usuário não autenticado");
             document.getElementById('user-email-display').textContent = "-";
@@ -387,7 +530,8 @@ function setupAuthListener() {
             mainApp.style.display = 'none';
             landingScreen.style.display = 'flex';
             landingScreen.classList.remove('hide');
-            
+            showLandingLoginBox();
+
             resetVehicleDisplay();
         }
     });
