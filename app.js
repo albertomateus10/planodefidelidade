@@ -2229,7 +2229,11 @@ async function handleConsultantCreate() {
         showToast(`Consultor "${nome}" cadastrado com sucesso!`, "success");
     } catch (error) {
         console.error("Erro ao cadastrar consultor:", error);
-        showToast("Erro ao cadastrar consultor no Firebase.", "error");
+        if (error.code === 'permission-denied') {
+            showToast("Permissão negada no Firestore para a coleção 'consultores'.", "error");
+        } else {
+            showToast(`Erro ao cadastrar consultor no Firebase: ${error.message || error.code || 'tente novamente.'}`, "error");
+        }
     }
 }
 
@@ -2248,7 +2252,11 @@ async function handleConsultantDelete(id, nome) {
         showToast(`Consultor "${nome}" removido.`, "info");
     } catch (error) {
         console.error("Erro ao excluir consultor:", error);
-        showToast("Erro ao excluir consultor.", "error");
+        if (error.code === 'permission-denied') {
+            showToast("Permissão negada no Firestore para excluir da coleção 'consultores'.", "error");
+        } else {
+            showToast(`Erro ao excluir consultor: ${error.message || error.code || 'tente novamente.'}`, "error");
+        }
     }
 }
 
