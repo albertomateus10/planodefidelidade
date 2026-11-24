@@ -62,6 +62,7 @@ const elements = {
     searchInput: document.getElementById('search-input'),
     registerForm: document.getElementById('register-form'),
     regPlacaChassi: document.getElementById('reg-placa-chassi'),
+    regModelo: document.getElementById('reg-modelo'),
     regConsultor: document.getElementById('reg-consultor'),
     
     // Autocomplete
@@ -70,6 +71,7 @@ const elements = {
     // Info do Veículo
     vehicleDetails: document.getElementById('vehicle-details'),
     infoPlacaChassi: document.getElementById('info-placa-chassi'),
+    infoModelo: document.getElementById('info-modelo'),
     infoConsultor: document.getElementById('info-consultor'),
     infoData: document.getElementById('info-data'),
     btnEditVehicle: document.getElementById('btn-edit-vehicle'),
@@ -80,6 +82,7 @@ const elements = {
     editVehicleForm: document.getElementById('edit-vehicle-form'),
     editVehId: document.getElementById('edit-veh-id'),
     editVehPlacaChassi: document.getElementById('edit-veh-placa-chassi'),
+    editVehModelo: document.getElementById('edit-veh-modelo'),
     editVehConsultor: document.getElementById('edit-veh-consultor'),
     closeEditVehicle: document.getElementById('close-edit-vehicle'),
     cancelEditVehicle: document.getElementById('cancel-edit-vehicle'),
@@ -110,6 +113,7 @@ const elements = {
     closeVoucher: document.getElementById('close-voucher'),
     btnPrintVoucher: document.getElementById('btn-print-voucher'),
     voucherPlacaChassi: document.getElementById('voucher-placa-chassi'),
+    voucherModelo: document.getElementById('voucher-modelo'),
     voucherConsultor: document.getElementById('voucher-consultor'),
     voucherData: document.getElementById('voucher-data'),
     
@@ -123,6 +127,7 @@ const elements = {
     kpiTotalRevisions: document.getElementById('kpi-total-revisions'),
     kpiTopConsultor: document.getElementById('kpi-top-consultor'),
     filterPlacaChassi: document.getElementById('filter-placa-chassi'),
+    filterModelo: document.getElementById('filter-modelo'),
     filterConsultor: document.getElementById('filter-consultor'),
     btnExportExcel: document.getElementById('btn-export-excel'),
     
@@ -555,15 +560,15 @@ function setupEventListeners() {
     elements.registerForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const { placa, chassi } = parseVehicleIdentifier(elements.regPlacaChassi.value);
-        const concessionaria = elements.regConcessionaria.value.trim();
+        const modelo = elements.regModelo.value.trim();
         const consultor = elements.regConsultor.value.trim();
 
-        if (!placa || !concessionaria || !consultor) {
+        if (!placa || !modelo || !consultor) {
             showToast("Preencha todos os campos do veículo.", "error");
             return;
         }
 
-        await registerVehicle(placa, chassi, concessionaria, consultor);
+        await registerVehicle(placa, chassi, modelo, consultor);
     });
 
 
@@ -691,6 +696,9 @@ function setupEventListeners() {
             
             // Preenche os dados no voucher
             elements.voucherPlacaChassi.textContent = getVehicleIdentifier(currentVehicle);
+            if (elements.voucherModelo) {
+                elements.voucherModelo.textContent = currentVehicle.modelo || '-';
+            }
             elements.voucherConsultor.textContent = currentVehicle.consultor || '-';
             
             const hoje = new Date();
@@ -762,7 +770,7 @@ function setupEventListeners() {
     }
 
     // Filtros em tempo real
-    const filterInputs = [elements.filterPlacaChassi, elements.filterConcessionaria, elements.filterConsultor];
+    const filterInputs = [elements.filterPlacaChassi, elements.filterModelo, elements.filterConsultor];
     filterInputs.forEach(input => {
         if (input) {
             input.addEventListener('input', () => {
@@ -896,7 +904,7 @@ function openEditVehicleModal(vehicle) {
     const identifier = getVehicleIdentifier(vehicle);
     elements.editVehId.value = vehicle.id || '';
     elements.editVehPlacaChassi.value = identifier === '-' ? '' : identifier;
-    elements.editVehConcessionaria.value = vehicle.concessionaria || '';
+    if (elements.editVehModelo) elements.editVehModelo.value = vehicle.modelo || '';
     populateConsultantSelects(vehicle.consultor || '');
     elements.editVehConsultor.value = vehicle.consultor || '';
     showModal(elements.editVehicleModal);
@@ -911,10 +919,10 @@ async function saveEditedVehicle() {
 
     const id = elements.editVehId.value.trim();
     const { placa, chassi } = parseVehicleIdentifier(elements.editVehPlacaChassi.value);
-    const concessionaria = elements.editVehConcessionaria.value.trim();
+    const modelo = elements.editVehModelo ? elements.editVehModelo.value.trim() : '';
     const consultor = elements.editVehConsultor.value.trim();
 
-    if (!id || !placa || !concessionaria || !consultor) {
+    if (!id || !placa || !modelo || !consultor) {
         showToast("Preencha todos os campos do veículo.", "error");
         return;
     }
@@ -923,7 +931,7 @@ async function saveEditedVehicle() {
         await db.collection('veiculos').doc(id).update({
             placa,
             chassi,
-            concessionaria,
+            modelo,
             consultor,
             updated_at: firebase.firestore.FieldValue.serverTimestamp()
         });
@@ -934,7 +942,7 @@ async function saveEditedVehicle() {
                 ...currentVehicle,
                 placa,
                 chassi,
-                concessionaria,
+                modelo,
                 consultor
             };
             displayVehicleData(currentVehicle);
@@ -947,7 +955,7 @@ async function saveEditedVehicle() {
                 ...managerVehiclesList[idx],
                 placa,
                 chassi,
-                concessionaria,
+                modelo,
                 consultor
             };
             updateManagerKpisFromList();
@@ -1046,7 +1054,7 @@ async function searchVehicle(query) {
 }
 
 // Cadastra um novo veículo
-async function registerVehicle(placa, chassi, concessionaria, consultor) {
+async function registerVehicle(placa, chassi, modelo, consultor) {
     if (!db) {
         showToast("Banco de dados Firebase não inicializado.", "error");
         return;
@@ -1073,7 +1081,7 @@ async function registerVehicle(placa, chassi, concessionaria, consultor) {
         const novoVeiculo = {
             placa: placa,
             chassi: chassi,
-            concessionaria: concessionaria,
+            modelo: modelo,
             consultor: consultor,
             marcacoes: [],
             created_at: firebase.firestore.FieldValue.serverTimestamp(),
@@ -1262,7 +1270,7 @@ function renderSuggestions(vehicles, query) {
         const primaryHighlighted = highlightMatch(primaryValue, query);
         const subText = hasDistinctChassi
             ? `Chassi: ${highlightMatch(chassi, query)}`
-            : (vehicle.concessionaria || 'Placa/Chassi');
+            : (vehicle.modelo ? `${vehicle.modelo}${vehicle.consultor ? ' • ' + vehicle.consultor : ''}` : (vehicle.consultor || 'Placa/Chassi'));
 
         item.innerHTML = `
             <div class="autocomplete-item-icon">
@@ -1325,7 +1333,7 @@ function invalidateVehiclesCache() {
 
 function displayVehicleData(vehicle) {
     elements.infoPlacaChassi.textContent = getVehicleIdentifier(vehicle);
-    elements.infoConcessionaria.textContent = vehicle.concessionaria || '-';
+    if (elements.infoModelo) elements.infoModelo.textContent = vehicle.modelo || '-';
     elements.infoConsultor.textContent = vehicle.consultor || '-';
     
     // Converte timestamp do Firebase ou data normal
@@ -1404,7 +1412,7 @@ async function openManagerDashboard() {
 
     // Limpa filtros antigos
     if (elements.filterPlacaChassi) elements.filterPlacaChassi.value = '';
-    if (elements.filterConcessionaria) elements.filterConcessionaria.value = '';
+    if (elements.filterModelo) elements.filterModelo.value = '';
     if (elements.filterConsultor) elements.filterConsultor.value = '';
 
     // Abre o modal
@@ -1430,57 +1438,7 @@ async function openManagerDashboard() {
             ...doc.data()
         }));
 
-        // Calcula Métricas de KPI
-        const totalVehicles = managerVehiclesList.length;
-        const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
-
-        // Concessionária Líder
-        const concCounts = {};
-        managerVehiclesList.forEach(v => {
-            const conc = (v.concessionaria || 'Não informada').trim();
-            if (conc) {
-                concCounts[conc] = (concCounts[conc] || 0) + 1;
-            }
-        });
-
-        let topConc = 'Nenhuma';
-        let maxCount = 0;
-        for (const [conc, count] of Object.entries(concCounts)) {
-            if (count > maxCount) {
-                maxCount = count;
-                topConc = conc;
-            }
-        }
-
-        // Consultor Líder
-        const consultorCounts = {};
-        managerVehiclesList.forEach(v => {
-            const consultor = (v.consultor || '').trim();
-            if (consultor && consultor !== 'Não informado') {
-                consultorCounts[consultor] = (consultorCounts[consultor] || 0) + 1;
-            }
-        });
-
-        let topConsultor = 'Nenhum';
-        let maxConsultorCount = 0;
-        for (const [consultor, count] of Object.entries(consultorCounts)) {
-            if (count > maxConsultorCount) {
-                maxConsultorCount = count;
-                topConsultor = consultor;
-            }
-        }
-
-        // Atualiza elementos na tela
-        if (elements.kpiTotalVehicles) elements.kpiTotalVehicles.textContent = totalVehicles;
-        if (elements.kpiTotalRevisions) elements.kpiTotalRevisions.textContent = totalRevisions;
-        if (elements.kpiTopConcessionaria) {
-            elements.kpiTopConcessionaria.textContent = topConc;
-            elements.kpiTopConcessionaria.title = topConc;
-        }
-        if (elements.kpiTopConsultor) {
-            elements.kpiTopConsultor.textContent = topConsultor;
-            elements.kpiTopConsultor.title = topConsultor;
-        }
+        updateManagerKpisFromList();
 
         // Renderiza a tabela
         renderManagerDashboardTable(managerVehiclesList);
@@ -1505,23 +1463,6 @@ function updateManagerKpisFromList() {
     const totalVehicles = managerVehiclesList.length;
     const totalRevisions = managerVehiclesList.reduce((acc, v) => acc + (v.marcacoes ? v.marcacoes.length : 0), 0);
 
-    const concCounts = {};
-    managerVehiclesList.forEach(v => {
-        const conc = (v.concessionaria || 'Não informada').trim();
-        if (conc) {
-            concCounts[conc] = (concCounts[conc] || 0) + 1;
-        }
-    });
-
-    let topConc = 'Nenhuma';
-    let maxCount = 0;
-    for (const [conc, count] of Object.entries(concCounts)) {
-        if (count > maxCount) {
-            maxCount = count;
-            topConc = conc;
-        }
-    }
-
     const consultorCounts = {};
     managerVehiclesList.forEach(v => {
         const consultor = (v.consultor || '').trim();
@@ -1541,10 +1482,6 @@ function updateManagerKpisFromList() {
 
     if (elements.kpiTotalVehicles) elements.kpiTotalVehicles.textContent = totalVehicles;
     if (elements.kpiTotalRevisions) elements.kpiTotalRevisions.textContent = totalRevisions;
-    if (elements.kpiTopConcessionaria) {
-        elements.kpiTopConcessionaria.textContent = topConc;
-        elements.kpiTopConcessionaria.title = topConc;
-    }
     if (elements.kpiTopConsultor) {
         elements.kpiTopConsultor.textContent = topConsultor;
         elements.kpiTopConsultor.title = topConsultor;
@@ -1573,8 +1510,8 @@ function renderManagerDashboardTable(vehicles) {
         placaChassiCell.style.fontWeight = '700';
         placaChassiCell.textContent = identifier;
 
-        const concessionariaCell = document.createElement('td');
-        concessionariaCell.textContent = vehicle.concessionaria || '-';
+        const modeloCell = document.createElement('td');
+        modeloCell.textContent = vehicle.modelo || '-';
 
         const consultorCell = document.createElement('td');
         consultorCell.textContent = vehicle.consultor || '-';
@@ -1624,7 +1561,7 @@ function renderManagerDashboardTable(vehicles) {
         }
 
         tr.appendChild(placaChassiCell);
-        tr.appendChild(concessionariaCell);
+        tr.appendChild(modeloCell);
         tr.appendChild(consultorCell);
         tr.appendChild(revisoesCell);
         tr.appendChild(actionsCell);
@@ -1635,7 +1572,7 @@ function renderManagerDashboardTable(vehicles) {
 
 function filterManagerDashboardTable() {
     const valPlacaChassi = elements.filterPlacaChassi ? elements.filterPlacaChassi.value.trim().toUpperCase() : '';
-    const valConc = elements.filterConcessionaria ? elements.filterConcessionaria.value.trim().toUpperCase() : '';
+    const valModelo = elements.filterModelo ? elements.filterModelo.value.trim().toUpperCase() : '';
     const valConsultor = elements.filterConsultor ? elements.filterConsultor.value.trim().toUpperCase() : '';
 
     const filtered = managerVehiclesList.filter(v => {
@@ -1644,9 +1581,9 @@ function filterManagerDashboardTable() {
             identifier.includes(valPlacaChassi) ||
             (v.placa && v.placa.toUpperCase().includes(valPlacaChassi)) ||
             (v.chassi && v.chassi.toUpperCase().includes(valPlacaChassi));
-        const matchConc = !valConc || (v.concessionaria && v.concessionaria.toUpperCase().includes(valConc));
+        const matchModelo = !valModelo || (v.modelo && v.modelo.toUpperCase().includes(valModelo));
         const matchConsultor = !valConsultor || (v.consultor && v.consultor.toUpperCase().includes(valConsultor));
-        return matchPlacaChassi && matchConc && matchConsultor;
+        return matchPlacaChassi && matchModelo && matchConsultor;
     });
 
     renderManagerDashboardTable(filtered);
@@ -1661,7 +1598,7 @@ function exportManagerDataToExcel() {
     // Cria os cabeçalhos
     const headers = [
         "Placa/Chassi",
-        "Concessionária Vendedora",
+        "Modelo",
         "Consultor",
         "Revisões Realizadas",
         "Data de Cadastro"
@@ -1679,7 +1616,7 @@ function exportManagerDataToExcel() {
 
         return [
             getVehicleIdentifier(vehicle),
-            vehicle.concessionaria || "-",
+            vehicle.modelo || "-",
             vehicle.consultor || "-",
             `${numMarcacoes} / 10`,
             dateStr

@@ -148,6 +148,10 @@
                             <span class="info-value" id="info-placa-chassi">-</span>
                         </div>
                         <div class="info-row">
+                            <span class="info-label">Modelo:</span>
+                            <span class="info-value" id="info-modelo">-</span>
+                        </div>
+                        <div class="info-row">
                             <span class="info-label">Consultor:</span>
                             <span class="info-value" id="info-consultor">-</span>
                         </div>
@@ -187,6 +191,10 @@
                         <div class="form-group">
                             <label for="reg-placa-chassi">Placa/Chassi</label>
                             <input type="text" id="reg-placa-chassi" class="form-input" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-modelo">Modelo</label>
+                            <input type="text" id="reg-modelo" class="form-input" required>
                         </div>
                         <div class="form-group">
                             <label for="reg-consultor">Consultor</label>
@@ -288,6 +296,7 @@
                             <h2>Plano de Fidelidade San Marino</h2>
                             <div class="voucher-vehicle-grid">
                                 <div><strong>Placa/Chassi:</strong> <span id="voucher-placa-chassi">-</span></div>
+                                <div><strong>Modelo:</strong> <span id="voucher-modelo">-</span></div>
                                 <div><strong>Consultor:</strong> <span id="voucher-consultor">-</span></div>
                                 <div><strong>Data de Emissão:</strong> <span id="voucher-data">-</span></div>
                             </div>
@@ -355,13 +364,6 @@
                         </div>
                     </div>
                     <div class="kpi-card">
-                        <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(232, 67, 147, 0.15), rgba(232, 67, 147, 0.05)); color: #e84393;"><i class="fas fa-store"></i></div>
-                        <div class="kpi-data">
-                            <span class="kpi-value" id="kpi-top-concessionaria">-</span>
-                            <span class="kpi-label">Concessionária Líder</span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
                         <div class="kpi-icon" style="background: linear-gradient(135deg, rgba(241, 196, 15, 0.15), rgba(241, 196, 15, 0.05)); color: #f1c40f;"><i class="fas fa-user-tie"></i></div>
                         <div class="kpi-data">
                             <span class="kpi-value" id="kpi-top-consultor">-</span>
@@ -380,10 +382,10 @@
                         </div>
                     </div>
                     <div class="filter-group">
-                        <label for="filter-concessionaria">Filtrar por Concessionária</label>
+                        <label for="filter-modelo">Filtrar por Modelo</label>
                         <div class="input-icon-wrapper">
-                            <i class="fas fa-store"></i>
-                            <input type="text" id="filter-concessionaria" class="form-input filter-input" placeholder="Ex: San Marino" autocomplete="off">
+                            <i class="fas fa-car"></i>
+                            <input type="text" id="filter-modelo" class="form-input filter-input" placeholder="Ex: Pulse, Toro..." autocomplete="off">
                         </div>
                     </div>
                     <div class="filter-group">
@@ -401,7 +403,7 @@
                         <thead>
                             <tr>
                                 <th>Placa/Chassi</th>
-                                <th>Concessionária Vendedora</th>
+                                <th>Modelo</th>
                                 <th>Consultor</th>
                                 <th style="text-align: center;">Revisões Realizadas</th>
                                 <th style="text-align: center;">Ações</th>
@@ -434,8 +436,8 @@
                         <input type="text" id="edit-veh-placa-chassi" class="form-input" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 14px;">
-                        <label for="edit-veh-concessionaria">Concessionária vendedora</label>
-                        <input type="text" id="edit-veh-concessionaria" class="form-input" required>
+                        <label for="edit-veh-modelo">Modelo</label>
+                        <input type="text" id="edit-veh-modelo" class="form-input" required>
                     </div>
                     <div class="form-group" style="margin-bottom: 20px;">
                         <label for="edit-veh-consultor">Consultor</label>
@@ -591,7 +593,7 @@
 
     <!-- Configuração e Arquivos de Código -->
     <script src="config.js?v=3"></script>
-    <script src="app.js?v=9"></script>
+    <script src="app.js?v=11"></script>
 </body>
 
 </html>
