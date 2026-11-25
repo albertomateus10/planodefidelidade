@@ -1388,21 +1388,22 @@ footer {
    ESTILOS DO BOTÃO FLUTUANTE E MODAL DE VOUCHER
    ============================================================ */
 
-/* Botão Gerar Voucher */
+/* Botão Gerar Voucher (dentro do box Dados do Veículo) */
 .btn-voucher-float {
+    flex: 1 0 100%;
     width: 100%;
-    padding: 10px 12px;
+    padding: 9px 12px;
     background: linear-gradient(135deg, var(--brand-red), var(--brand-red-hover));
     color: white;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-family: 'Montserrat', sans-serif;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
     cursor: pointer;
-    box-shadow: 0 6px 15px rgba(238, 82, 83, 0.25);
+    box-shadow: 0 5px 14px rgba(238, 82, 83, 0.25);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1540,24 +1541,6 @@ footer {
         flex-direction: column;
         align-items: flex-start;
         gap: 8px;
-    }
-}
-
-@media (max-width: 1024px) {
-    .btn-voucher-float {
-        position: fixed;
-        bottom: 0;
-        left: 50%;
-        transform: translateX(-50%);
-        width: auto;
-        min-width: 150px; /* Reduzido para ficar menor */
-        max-width: 200px; /* Reduzido para ficar menor */
-        border-radius: 6px 6px 0 0; /* Proporcional ao print */
-        padding: 6px 12px; /* Reduzido para ficar menor */
-        font-size: 0.72rem; /* Reduzido para ficar menor */
-        z-index: 1000;
-        margin-top: 0;
-        box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
     }
 }
 
@@ -2004,9 +1987,10 @@ footer {
     color: #2563eb;
 }
 
-/* Botões de Editar e Excluir nos Dados do Veículo (Painel Lateral) */
+/* Botões de Editar, Excluir e Gerar Voucher nos Dados do Veículo (Painel Lateral) */
 .vehicle-detail-actions {
     display: flex;
+    flex-wrap: wrap;
     gap: 8px;
     margin-top: 10px;
     padding-top: 8px;
